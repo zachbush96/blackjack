@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simple Blackjack with Running Count</title>
+    <style>
+      body {
+          font-family: Arial, sans-serif;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          height: 100vh;
+          margin: 0;
+          background-color: #f4f4f4;
+      }
+      .game-container {
+          text-align: center;
+          border: 1px solid #ccc;
+          padding: 20px;
+          background-color: #fff;
+      }
+      button {
+          margin: 5px;
+          padding: 10px 20px;
+          font-size: 16px;
+      }
+      input {
+          margin-bottom: 10px;
+          padding: 5px;
+          width: 100px;
+          text-align: center;
+      }
+      .status {
+          margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="game-container">
+      <h1>Blackjack</h1>
+      <h2>Running Count: <span id="runningCount">0</span></h2>
+      <p>Balance: $<span id="balance">500</span></p>
+      <p>Current Bet: $<span id="bet">25</span></p>
+
+      <div>
+        <label for="betInput">Set Bet:</label>
+        <input type="number" id="betInput" value="25" min="1" />
+        <button onclick="setBet()">Set Bet</button>
+      </div>
+
+      <div>
+        <button onclick="startGame()">Start Game</button>
+        <button onclick="hit()">Hit</button>
+        <button onclick="stand()">Stand</button>
+        <button onclick="doubleDown()">Double Down</button>
+        <button onclick="split()">Split</button>
+      </div>
+
+      <div class="status">
+        <p id="dealerHand">Dealer: []</p>
+        <p id="playerHand">Player: []</p>
+        <p id="playerHand2"></p>
+        <p id="message"></p>
+      </div>
+    </div>
+
+    <script>
+      let balance = 500;
+      let bet = 25;
+      let deck = [];
+      let playerHand = [];
+      let dealerHand = [];
+      let playerHand2 = [];
+      let splitActive = false;
+      let gameActive = false;
+      let playingHand = 1;
+      let doubledDown = false;
+      let cardsUsed = 0;
+      let runningCount = 0;
+
+      function setBet() {
+          const betInput = document.getElementById('betInput').value;
+          if (betInput <= balance) {
+              bet = parseInt(betInput);
+              document.getElementById('bet').innerText = bet;
+          }
+      }
+
+      function startGame() {
+          if (gameActive) return;
+          if (deck.length === 0 || cardsUsed / 52 >= 0.85) {
+              deck = createDeck();
+              shuffleDeck(deck);
+              cardsUsed = 0;
+              runningCount = 0;
+              updateRunningCountDisplay();
+          }
+          playerHand = [drawCard(), drawCard()];
+          dealerHand = [drawCard(), drawCard()];
+          playerHand2 = [];
+          splitActive = false;
+          playingHand = 1;
+          doubledDown = false;
+          gameActive = true;
+          document.getElementById('message').innerText = "";
+
+          if (getHandValue(playerHand) === 21) {
+              handleBlackjack();
+          } else {
+              updateUI();
+          }
+      }
+
+      function createDeck() {
+          const suits = ['♠', '♥', '♦', '♣'];
+          const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+          const deck = [];
+          for (let suit of suits) {
+              for (let value of values) {
+                  deck.push({ suit, value });
+              }
+          }
+          return deck;
+      }
+
+      function shuffleDeck(deck) {
+          for (let i = deck.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [deck[i], deck[j]] = [deck[j], deck[i]];
+          }
+      }
+
+      function drawCard() {
+          cardsUsed++;
+          const card = deck.pop();
+          updateRunningCount(card);
+          return card;
+      }
+
+      function updateRunningCount(card) {
+          if (['10', 'J', 'Q', 'K', 'A'].includes(card.value)) {
+              runningCount--;
+          } else if (['2', '3', '4', '5', '6'].includes(card.value)) {
+              runningCount++;
+          }
+          updateRunningCountDisplay();
+      }
+
+      function updateRunningCountDisplay() {
+          document.getElementById('runningCount').innerText = runningCount;
+      }
+
+      function getHandValue(hand) {
+          let value = 0;
+          let aces = 0;
+          for (let card of hand) {
+              if (['J', 'Q', 'K'].includes(card.value)) {
+                  value += 10;
+              } else if (card.value === 'A') {
+                  value += 11;
+                  aces += 1;
+              } else {
+                  value += parseInt(card.value);
+              }
+          }
+          while (value > 21 && aces > 0) {
+              value -= 10;
+              aces -= 1;
+          }
+          return value;
+      }
+
+      function hit() {
+          if (!gameActive) return;
+          if (splitActive && playingHand === 2) {
+              playerHand2.push(drawCard());
+              if (getHandValue(playerHand2) > 21) {
+                  stand();
+              }
+          } else {
+              playerHand.push(drawCard());
+              if (getHandValue(playerHand) > 21) {
+                  if (splitActive) {
+                      playingHand = 2;
+                  } else {
+                      stand();
+                  }
+              }
+          }
+          updateUI();
+      }
+
+      function stand() {
+          if (!gameActive) return;
+          if (splitActive && playingHand === 1) {
+              playingHand = 2;
+              updateUI();
+              return;
+          }
+          while (getHandValue(dealerHand) < 17) {
+              dealerHand.push(drawCard());
+          }
+          checkGameOver();
+          updateUI();
+      }
+
+      function doubleDown() {
+          if (!gameActive || doubledDown || (splitActive && playingHand === 2)) return;
+          bet *= 2;
+          document.getElementById('bet').innerText = bet;
+          doubledDown = true;
+          hit();
+          if (gameActive) {
+              stand();
+          }
+      }
+
+      function split() {
+          if (playerHand.length === 2 && playerHand[0].value === playerHand[1].value && !splitActive) {
+              splitActive = true;
+              playerHand2.push(playerHand.pop());
+              playerHand.push(drawCard());
+              playerHand2.push(drawCard());
+              playingHand = 1;
+              updateUI();
+          }
+      }
+
+      function handleBlackjack() {
+          balance += bet * 1.5;
+          document.getElementById('balance').innerText = balance;
+          document.getElementById('message').innerText = "Blackjack! You win 3 to 2!";
+          gameActive = false;
+          updateUI();
+      }
+
+      function checkGameOver() {
+          const playerValue = getHandValue(playerHand);
+          const dealerValue = getHandValue(dealerHand);
+          const playerValue2 = splitActive ? getHandValue(playerHand2) : null;
+
+          if (playerValue > 21) {
+              balance -= bet;
+              document.getElementById('message').innerText = "Player busts!";
+          } else if (playerValue2 !== null && playerValue2 > 21) {
+              balance -= bet;
+              document.getElementById('message').innerText = "Split hand busts!";
+          } else if (dealerValue > 21 || (playerValue <= 21 && playerValue > dealerValue)) {
+              balance += bet;
+              document.getElementById('message').innerText = "Player wins!";
+          } else if (playerValue < dealerValue) {
+              balance -= bet;
+              document.getElementById('message').innerText = "Dealer wins!";
+          } else if (playerValue === dealerValue) {
+              document.getElementById('message').innerText = "Push!";
+          }
+
+          if (splitActive) {
+              if (playerValue2 !== null && playerValue2 <= 21) {
+                  if (playerValue2 > dealerValue || dealerValue > 21) {
+                      balance += bet;
+                      document.getElementById('message').innerText += " Split hand wins!";
+                  } else if (playerValue2 < dealerValue) {
+                      balance -= bet;
+                      document.getElementById('message').innerText += " Split hand loses!";
+                  } else {
+                      document.getElementById('message').innerText += " Split hand pushes!";
+                  }
+              }
+          }
+          if (doubledDown) {
+              bet /= 2;
+              document.getElementById('bet').innerText = bet;
+              doubledDown = false;
+          }
+
+          gameActive = false;
+          document.getElementById('balance').innerText = balance;
+      }
+
+      function updateUI() {
+          document.getElementById('playerHand').innerText = `Player Hand 1: ${playerHand.map(card => `${card.value}${card.suit}`).join(', ')}`;
+          if (splitActive) {
+              document.getElementById('playerHand2').innerText = `Player Hand 2: ${playerHand2.map(card => `${card.value}${card.suit}`).join(', ')}`;
+          } else {
+              document.getElementById('playerHand2').innerText = '';
+          }
+
+          if (gameActive) {
+              document.getElementById('dealerHand').innerText = `Dealer: ${dealerHand[0].value}${dealerHand[0].suit}, [Hidden]`;
+          } else {
+              document.getElementById('dealerHand').innerText = `Dealer: ${dealerHand.map(card => `${card.value}${card.suit}`).join(', ')}`;
+          }
+      }
+    </script>
+  </body>
+</html>
