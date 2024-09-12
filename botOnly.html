@@ -3,14 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Bot Blackjack with Running Count and Stats</title>
+    <title>Bot Blackjack with Optimized Strategy</title>
     <style>
       body {
           font-family: Arial, sans-serif;
           display: flex;
           flex-direction: column;
           align-items: center;
-          justify-content: center;
+          /* justify-content: center; */
           height: 100vh;
           margin: 0;
           background-color: #f4f4f4;
@@ -20,6 +20,7 @@
           border: 1px solid #ccc;
           padding: 20px;
           background-color: #fff;
+          width: 450px;
       }
       button {
           margin: 5px;
@@ -49,7 +50,6 @@
       <div class="stats">
         <p>Wins: <span id="wins">0</span></p>
         <p>Losses: <span id="losses">0</span></p>
-        <p>Pushes: <span id="pushes">0</span></p>
         <p>Win Percentage: <span id="winPercentage">0%</span></p>
         <p>Shuffle Counter: <span id="shuffleCounter">0</span></p>
       </div>
@@ -82,14 +82,15 @@
       let gameActive = false;
       let cardsUsed = 0;
       let runningCount = 0;
+      let trueCount = 0;
       let wins = 0;
       let losses = 0;
-      let pushes = 0;
       let autoPlayInterval;
       let isAutoPlaying = false;
       let shuffleCount = 0; // shuffle Counter
       const numDecks = 6;
-      const shuffleThreshold = 0.76;
+      const shuffleThreshold = 0.94;
+      //const shuffleThreshold = 0.98;
 
       function resetGame() {
         botBalance = 5000;
@@ -101,7 +102,6 @@
         runningCount = 0;
         wins = 0;
         losses = 0;
-        pushes = 0;
         shuffleCount = 0; // reset shuffle counter
 
         updateUI();
@@ -116,8 +116,10 @@
           shuffleDeck(deck);
           cardsUsed = 0;
           runningCount = 0;
+          trueCount = 0;
           updateRunningCountDisplay();
         }
+        adjustBetSize();
         botHand = [drawCard(), drawCard()];
         dealerHand = [drawCard(), drawCard()];
         gameActive = true;
@@ -131,24 +133,104 @@
         const botHandValue = getHandValue(botHand);
         const dealerVisibleCard = dealerHand[0].value;
 
-        if (botHandValue <= 11) {
-          hitBot();
-        } else if (botHandValue >= 17) {
-          standBot();
-        } else if (botHandValue >= 12 && botHandValue <= 16) {
-          if (['7', '8', '9', '10', 'J', 'Q', 'K', 'A'].includes(dealerVisibleCard)) {
-            hitBot();
-          } else {
-            standBot();
-          }
-        } else if (botHandValue === 10 || botHandValue === 11) {
-          if (['2', '3', '4', '5', '6'].includes(dealerVisibleCard)) {
-            doubleDownBot();
-          } else {
-            hitBot();
-          }
+        // Adjust strategy based on true count
+        if (trueCount >= 3) {
+            // More aggressive play when count is high
+            if (botHandValue === 16 && dealerVisibleCard === '10'){
+                standBot(); // Stand instead of hitting on 16 vs 10
+                return;
+            }
+            if (botHandValue == 15 && dealerVisibleCard === '10') {
+                standBot(); // Stand instead of hitting on 15 vs 10
+                return;
+            }
+
+        }
+
+
+        if (isPair(botHand)) {
+            handlePairSplit(botHandValue, dealerVisibleCard);
+        } else if (isSoftHand(botHand)) {
+            handleSoftHand(botHandValue, dealerVisibleCard);
+        } else {
+            handleHardHand(botHandValue, dealerVisibleCard);
         }
       }
+
+        function handlePairSplit(botHandValue, dealerVisibleCard) {
+            if (botHandValue === 16) { // Two 8s
+                splitBot();
+            } else if (botHandValue === 22) { // Two Aces
+                splitBot();
+            } else if (botHandValue === 18 && !['7', '10', 'A'].includes(dealerVisibleCard)) {
+                splitBot(); // Split 9s against most dealer cards
+            } else if (botHandValue === 20) {
+                standBot(); // Stand on a pair of 10s (20)
+            } else if (botHandValue === 12 && ['2', '3', '4', '5', '6', '7'].includes(dealerVisibleCard)) {
+                splitBot(); // Split 6s against dealer's 2-7
+            } else if (botHandValue === 14 && ['2', '3', '4', '5', '6', '7'].includes(dealerVisibleCard)) {
+                splitBot(); // Split 7s against dealer's 2-7
+            } else if (botHandValue === 4 && ['5', '6'].includes(dealerVisibleCard)) {
+                splitBot(); // Split 2s against dealer's 5-6
+            } else if (botHandValue === 6 && ['2', '3', '4', '5', '6'].includes(dealerVisibleCard)) {
+                splitBot(); // Split 3s against dealer's 2-6
+            } else {
+                handleHardHand(botHandValue, dealerVisibleCard); // If no split, follow hard hand logic
+            }
+        }
+
+
+      function handleSoftHand(botHandValue, dealerVisibleCard) {
+        if (botHandValue <= 17) {
+            hitBot();
+        } else if (botHandValue === 18 && ['9', '10', 'A'].includes(dealerVisibleCard)) {
+            hitBot(); // Soft 18 hits against strong dealer cards
+        } else {
+            standBot();
+        }
+      }
+
+      function handleHardHand(botHandValue, dealerVisibleCard) {
+        if (botHandValue <= 8) {
+            hitBot();
+        } else if (botHandValue === 9 && ['3', '4', '5', '6'].includes(dealerVisibleCard)) {
+            doubleDownBot();
+        //} else if (botHandValue === 10 && dealerVisibleCard !== '10' && dealerVisibleCard !== 'A') { // <-- ChatGPT recommended replacing this line with the line below,
+        } else if (botHandValue === 10 && ['2', '3', '4', '5', '6', '7', '8', '9'].includes(dealerVisibleCard)) {
+            doubleDownBot();
+        } else if (botHandValue === 11) {
+            doubleDownBot();
+        } else if (botHandValue >= 12 && botHandValue <= 16) {
+            if (['7', '8', '9', '10', 'J', 'Q', 'K', 'A'].includes(dealerVisibleCard)) {
+                hitBot();
+            } else {
+                standBot();
+            }
+        } else {
+            standBot();
+        }
+      }
+
+      function splitBot() {
+          // When splitting, the bot creates two hands and plays them sequentially
+          let firstCard = botHand[0];
+          let secondCard = botHand[1];
+
+          // Create two new hands
+          let hand1 = [firstCard, drawCard()];
+          let hand2 = [secondCard, drawCard()];
+
+          // Play the first hand
+          botHand = hand1;
+          updateUI();
+          botDecision();
+
+          // After finishing the first hand, play the second hand
+          botHand = hand2;
+          updateUI();
+          botDecision();
+      }
+
 
       function hitBot() {
         botHand.push(drawCard());
@@ -173,9 +255,12 @@
 
       function doubleDownBot() {
         botBet *= 2;
-        document.getElementById('botBet').innerText = botBet;
+        updateUI(); // ChatGPT Suggestion 
+        //document.getElementById('botBet').innerText = botBet; // ChatGPT Suggestion
         hitBot();
         standBot();
+        botBet == 25; //Reset bet amount after doubleing down (chatGPT recomendation)
+        updateUI(); // ChatGPT suggestion
       }
 
       function createDeck(numDecks = 6) {
@@ -191,7 +276,6 @@
           }
           return deck;
       }
-
 
       function shuffleDeck(deck) {
         for (let i = deck.length - 1; i > 0; i--) {
@@ -216,24 +300,41 @@
           return card;
       }
 
-
       function updateRunningCount(card) {
         if (['10', 'J', 'Q', 'K', 'A'].includes(card.value)) {
           runningCount--;
         } else if (['2', '3', '4', '5', '6'].includes(card.value)) {
           runningCount++;
         }
+        updateTrueCount();
         updateRunningCountDisplay();
       }
 
+      function updateTrueCount() {
+        const decksRemaining = (deck.length + 52 * numDecks - cardsUsed) / 52;
+        trueCount = Math.round(runningCount / decksRemaining);
+      }
+
       function updateRunningCountDisplay() {
-        document.getElementById('runningCount').innerText = runningCount;
+        //document.getElementById('runningCount').innerText = runningCount;
+        document.getElementById('runningCount').innerText = `${runningCount} (True: ${trueCount})`;
       }
 
       function updateShuffleCounterDisplay() {
         document.getElementById('shuffleCounter').innerText = shuffleCount;
       }
 
+      function adjustBetSize() {
+        if (trueCount >= 1) {
+            //botBet = Math.min(25 * (trueCount + 1), botBalance / 10);
+            botBet = Math.min(25 * (trueCount + 1));
+        } else {
+            botBet = 25;
+        }
+        document.getElementById('botBet').innerText = botBet;
+      }
+
+      
       function getHandValue(hand) {
         let value = 0;
         let aces = 0;
@@ -254,37 +355,55 @@
         return value;
       }
 
+      function isPair(hand) {
+        return hand.length === 2 && hand[0].value === hand[1].value;
+      }
+
+      function isSoftHand(hand) {
+        return hand.some(card => card.value === 'A') && getHandValue(hand) <= 21;
+      }
+
       function checkGameOver() {
         const botValue = getHandValue(botHand);
         const dealerValue = getHandValue(dealerHand);
+        const botBlackjack = (botValue === 21 && botHand.length === 2);
+        const dealerBlackjack = (dealerValue === 21 && dealerHand.length === 2);
 
-        if (botValue > 21) {
-          botBalance -= botBet;
-          document.getElementById('message').innerText = "Bot busts! Bot loses.";
-          losses++;
+        if (botBlackjack && !dealerBlackjack) {
+            botBalance += botBet * 1.5;  // Blackjack pays 3:2
+            document.getElementById('message').innerText = "Bot has Blackjack! Bot wins!";
+            wins++;
+        } else if (dealerBlackjack && !botBlackjack) {
+            botBalance -= botBet;
+            document.getElementById('message').innerText = "Dealer has Blackjack! Bot loses.";
+            losses++;
+        } else if (botValue > 21) {
+            botBalance -= botBet;
+            document.getElementById('message').innerText = "Bot busts! Bot loses.";
+            losses++;
         } else if (dealerValue > 21) {
-          botBalance += botBet;
-          document.getElementById('message').innerText = "Dealer busts! Bot wins!";
-          wins++;
+            botBalance += botBet;
+            document.getElementById('message').innerText = "Dealer busts! Bot wins!";
+            wins++;
         } else if (botValue > dealerValue) {
-          botBalance += botBet;
-          document.getElementById('message').innerText = "Bot wins!";
-          wins++;
+            botBalance += botBet;
+            document.getElementById('message').innerText = "Bot wins!";
+            wins++;
         } else if (botValue < dealerValue) {
-          botBalance -= botBet;
-          document.getElementById('message').innerText = "Bot loses.";
-          losses++;
+            botBalance -= botBet;
+            document.getElementById('message').innerText = "Bot loses.";
+            losses++;
         } else {
-          document.getElementById('message').innerText = "Push! It's a tie.";
-          pushes++;
+            document.getElementById('message').innerText = "Push! It's a tie.";
         }
 
         document.getElementById('botBalance').innerText = botBalance;
         botBet = 25;  // Reset bet to default
-        document.getElementById('botBet').innerText = botBet;
+        updateUI();
         gameActive = false;
         updateStats();
-      }
+    }
+
 
       function updateUI() {
         document.getElementById('botHand').innerText = `Bot: ${botHand.map(card => `${card.value}${card.suit}`).join(', ')}`;
@@ -300,7 +419,6 @@
       function updateStats() {
         document.getElementById('wins').innerText = wins;
         document.getElementById('losses').innerText = losses;
-        document.getElementById('pushes').innerText = pushes;
         const totalGames = wins + losses;
         const winPercentage = totalGames > 0 ? ((wins / totalGames) * 100).toFixed(2) : 0;
         document.getElementById('winPercentage').innerText = `${winPercentage}%`;
