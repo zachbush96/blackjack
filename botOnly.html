@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bot Blackjack with Running Count and Stats</title>
+    <style>
+      body {
+          font-family: Arial, sans-serif;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          height: 100vh;
+          margin: 0;
+          background-color: #f4f4f4;
+      }
+      .game-container {
+          text-align: center;
+          border: 1px solid #ccc;
+          padding: 20px;
+          background-color: #fff;
+      }
+      button {
+          margin: 5px;
+          padding: 10px 20px;
+          font-size: 16px;
+      }
+      .status {
+          margin-top: 20px;
+      }
+      .stats {
+          margin-top: 20px;
+          font-weight: bold;
+      }
+      #speedControl {
+          width: 200px;
+          margin: 10px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="game-container">
+      <h1>Bot Blackjack</h1>
+      <h2>Running Count: <span id="runningCount">0</span></h2>
+      <p>Bot Balance: $<span id="botBalance">5000</span></p>
+      <p>Current Bet: $<span id="botBet">25</span></p>
+
+      <div class="stats">
+        <p>Wins: <span id="wins">0</span></p>
+        <p>Losses: <span id="losses">0</span></p>
+        <p>Win Percentage: <span id="winPercentage">0%</span></p>
+      </div>
+
+      <div>
+        <button id="startButton" onclick="toggleAutoPlay()">Start Auto-play</button>
+        <button onclick="resetGame()">New Game</button>
+      </div>
+
+      <div>
+        <label for="speedControl">Game Speed:</label>
+        <input type="range" id="speedControl" min="1" max="10" value="5">
+      </div>
+
+      <div class="status">
+        <p id="dealerHand">Dealer: []</p>
+        <p id="botHand">Bot: []</p>
+        <p id="message"></p>
+      </div>
+    </div>
+
+    <script>
+      let deck = [];
+      let dealerHand = [];
+      let botHand = [];
+      let botBalance = 5000;
+      let botBet = 25;
+      let gameActive = false;
+      let cardsUsed = 0;
+      let runningCount = 0;
+      let wins = 0;
+      let losses = 0;
+      let autoPlayInterval;
+      let isAutoPlaying = false;
+
+      function resetGame() {
+        botBalance = 5000;
+        botBet = 25;
+        dealerHand = [];
+        botHand = [];
+        gameActive = false;
+        cardsUsed = 0;
+        runningCount = 0;
+        wins = 0;
+        losses = 0;
+
+        updateUI();
+        updateStats();
+      }
+
+      function startGame() {
+        if (gameActive) return;
+        if (deck.length === 0 || cardsUsed / 52 >= 0.85) {
+          deck = createDeck();
+          shuffleDeck(deck);
+          cardsUsed = 0;
+          runningCount = 0;
+          updateRunningCountDisplay();
+        }
+        botHand = [drawCard(), drawCard()];
+        dealerHand = [drawCard(), drawCard()];
+        gameActive = true;
+        document.getElementById('message').innerText = "";
+
+        updateUI();
+        botDecision();
+      }
+
+      function botDecision() {
+        const botHandValue = getHandValue(botHand);
+        const dealerVisibleCard = dealerHand[0].value;
+
+        if (botHandValue <= 11) {
+          hitBot();
+        } else if (botHandValue >= 17) {
+          standBot();
+        } else if (botHandValue >= 12 && botHandValue <= 16) {
+          if (['7', '8', '9', '10', 'J', 'Q', 'K', 'A'].includes(dealerVisibleCard)) {
+            hitBot();
+          } else {
+            standBot();
+          }
+        } else if (botHandValue === 10 || botHandValue === 11) {
+          if (['2', '3', '4', '5', '6'].includes(dealerVisibleCard)) {
+            doubleDownBot();
+          } else {
+            hitBot();
+          }
+        }
+      }
+
+      function hitBot() {
+        botHand.push(drawCard());
+        if (getHandValue(botHand) > 21) {
+          standBot();  // Bot stands automatically if it busts
+        } else {
+          updateUI();
+          setTimeout(botDecision, getGameSpeed());
+        }
+      }
+
+      function standBot() {
+        while (getHandValue(dealerHand) < 17) {
+          dealerHand.push(drawCard());
+        }
+        checkGameOver();
+        updateUI();
+        if (isAutoPlaying) {
+          setTimeout(startGame, getGameSpeed() * 2);
+        }
+      }
+
+      function doubleDownBot() {
+        botBet *= 2;
+        document.getElementById('botBet').innerText = botBet;
+        hitBot();
+        standBot();
+      }
+
+      function createDeck() {
+        const suits = ['♠', '♥', '♦', '♣'];
+        const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+        const deck = [];
+        for (let suit of suits) {
+          for (let value of values) {
+            deck.push({ suit, value });
+          }
+        }
+        return deck;
+      }
+
+      function shuffleDeck(deck) {
+        for (let i = deck.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [deck[i], deck[j]] = [deck[j], deck[i]];
+        }
+      }
+
+      function drawCard() {
+        if (deck.length === 0 || cardsUsed / 52 >= 0.85) {
+          deck = createDeck();
+          shuffleDeck(deck);
+          cardsUsed = 0;
+          runningCount = 0;
+          updateRunningCountDisplay();
+        }
+        cardsUsed++;
+        const card = deck.pop();
+        updateRunningCount(card);
+        return card;
+      }
+
+      function updateRunningCount(card) {
+        if (['10', 'J', 'Q', 'K', 'A'].includes(card.value)) {
+          runningCount--;
+        } else if (['2', '3', '4', '5', '6'].includes(card.value)) {
+          runningCount++;
+        }
+        updateRunningCountDisplay();
+      }
+
+      function updateRunningCountDisplay() {
+        document.getElementById('runningCount').innerText = runningCount;
+      }
+
+      function getHandValue(hand) {
+        let value = 0;
+        let aces = 0;
+        for (let card of hand) {
+          if (['J', 'Q', 'K'].includes(card.value)) {
+            value += 10;
+          } else if (card.value === 'A') {
+            value += 11;
+            aces += 1;
+          } else {
+            value += parseInt(card.value);
+          }
+        }
+        while (value > 21 && aces > 0) {
+          value -= 10;
+          aces -= 1;
+        }
+        return value;
+      }
+
+      function checkGameOver() {
+        const botValue = getHandValue(botHand);
+        const dealerValue = getHandValue(dealerHand);
+
+        if (botValue > 21) {
+          botBalance -= botBet;
+          document.getElementById('message').innerText = "Bot busts! Bot loses.";
+          losses++;
+        } else if (dealerValue > 21) {
+          botBalance += botBet;
+          document.getElementById('message').innerText = "Dealer busts! Bot wins!";
+          wins++;
+        } else if (botValue > dealerValue) {
+          botBalance += botBet;
+          document.getElementById('message').innerText = "Bot wins!";
+          wins++;
+        } else if (botValue < dealerValue) {
+          botBalance -= botBet;
+          document.getElementById('message').innerText = "Bot loses.";
+          losses++;
+        } else {
+          document.getElementById('message').innerText = "Push! It's a tie.";
+        }
+
+        document.getElementById('botBalance').innerText = botBalance;
+        botBet = 25;  // Reset bet to default
+        document.getElementById('botBet').innerText = botBet;
+        gameActive = false;
+        updateStats();
+      }
+
+      function updateUI() {
+        document.getElementById('botHand').innerText = `Bot: ${botHand.map(card => `${card.value}${card.suit}`).join(', ')}`;
+        document.getElementById('botBalance').innerText = botBalance;
+        document.getElementById('botBet').innerText = botBet;
+        if (gameActive) {
+          document.getElementById('dealerHand').innerText = `Dealer: ${dealerHand[0].value}${dealerHand[0].suit}, [Hidden]`;
+        } else {
+          document.getElementById('dealerHand').innerText = `Dealer: ${dealerHand.map(card => `${card.value}${card.suit}`).join(', ')}`;
+        }
+      }
+
+      function updateStats() {
+        document.getElementById('wins').innerText = wins;
+        document.getElementById('losses').innerText = losses;
+        const totalGames = wins + losses;
+        const winPercentage = totalGames > 0 ? ((wins / totalGames) * 100).toFixed(2) : 0;
+        document.getElementById('winPercentage').innerText = `${winPercentage}%`;
+      }
+
+      function toggleAutoPlay() {
+        isAutoPlaying = !isAutoPlaying;
+        const startButton = document.getElementById('startButton');
+        if (isAutoPlaying) {
+          startButton.textContent = 'Stop Auto-play';
+          startGame();
+        } else {
+          startButton.textContent = 'Start Auto-play';
+        }
+      }
+
+      function getGameSpeed() {
+        const speedControl = document.getElementById('speedControl');
+        return (11 - speedControl.value) * 100;  // Invert the scale so 10 is fastest
+      }
+
+      // Initialize the game
+      resetGame();
+    </script>
+  </body>
+</html>
