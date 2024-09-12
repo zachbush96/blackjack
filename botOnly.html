@@ -97,7 +97,7 @@
       let isAutoPlaying = false;
       let shuffleCount = 0; // shuffle Counter
       const numDecks = 6;
-      const shuffleThreshold = 0.84;
+      const shuffleThreshold = 0.94;
       //const shuffleThreshold = 0.98;
 
       function resetGame() {
@@ -341,9 +341,9 @@
         } else if (trueCount <= -1) {
             botBet = 25;
             for (let i = -1; i > trueCount; i--) {
-                botBet = Math.ceil(botBet / 2);
+                botBet = Math.ceil(botBet / 1.5);
                 if (botBet < 10){
-                    alert("Bet went REALLY LOW!")
+                    //alert("Bet went REALLY LOW!")
                     botBet = 10;
                 }
             }
