@@ -49,17 +49,21 @@
       <div class="stats">
         <p>Wins: <span id="wins">0</span></p>
         <p>Losses: <span id="losses">0</span></p>
+        <p>Pushes: <span id="pushes">0</span></p>
         <p>Win Percentage: <span id="winPercentage">0%</span></p>
+        <p>Shuffle Counter: <span id="shuffleCounter">0</span></p>
       </div>
 
       <div>
-        <button id="startButton" onclick="toggleAutoPlay()">Start Auto-play</button>
+        <button id="startButton" onclick="toggleAutoPlay()">
+          Start Auto-play
+        </button>
         <button onclick="resetGame()">New Game</button>
       </div>
 
       <div>
         <label for="speedControl">Game Speed:</label>
-        <input type="range" id="speedControl" min="1" max="10" value="5">
+        <input type="range" id="speedControl" min="1" max="10" value="5" />
       </div>
 
       <div class="status">
@@ -80,8 +84,12 @@
       let runningCount = 0;
       let wins = 0;
       let losses = 0;
+      let pushes = 0;
       let autoPlayInterval;
       let isAutoPlaying = false;
+      let shuffleCount = 0; // shuffle Counter
+      const numDecks = 6;
+      const shuffleThreshold = 0.76;
 
       function resetGame() {
         botBalance = 5000;
@@ -93,14 +101,17 @@
         runningCount = 0;
         wins = 0;
         losses = 0;
+        pushes = 0;
+        shuffleCount = 0; // reset shuffle counter
 
         updateUI();
         updateStats();
+        updateShuffleCounterDisplay();
       }
 
       function startGame() {
         if (gameActive) return;
-        if (deck.length === 0 || cardsUsed / 52 >= 0.85) {
+        if (deck.length === 0 || cardsUsed / (52 * numDecks) >= shuffleThreshold) {
           deck = createDeck();
           shuffleDeck(deck);
           cardsUsed = 0;
@@ -167,38 +178,44 @@
         standBot();
       }
 
-      function createDeck() {
-        const suits = ['♠', '♥', '♦', '♣'];
-        const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
-        const deck = [];
-        for (let suit of suits) {
-          for (let value of values) {
-            deck.push({ suit, value });
+      function createDeck(numDecks = 6) {
+          const suits = ['♠', '♥', '♦', '♣'];
+          const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+          const deck = [];
+          for (let i = 0; i < numDecks; i++) { // Loop to create multiple decks
+              for (let suit of suits) {
+                  for (let value of values) {
+                      deck.push({ suit, value });
+                  }
+              }
           }
-        }
-        return deck;
+          return deck;
       }
+
 
       function shuffleDeck(deck) {
         for (let i = deck.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
           [deck[i], deck[j]] = [deck[j], deck[i]];
         }
+        shuffleCount++;
+        updateShuffleCounterDisplay();
       }
 
       function drawCard() {
-        if (deck.length === 0 || cardsUsed / 52 >= 0.85) {
-          deck = createDeck();
-          shuffleDeck(deck);
-          cardsUsed = 0;
-          runningCount = 0;
-          updateRunningCountDisplay();
-        }
-        cardsUsed++;
-        const card = deck.pop();
-        updateRunningCount(card);
-        return card;
+          if (deck.length === 0 || cardsUsed / (52 * numDecks) >= shuffleThreshold) { // Directly use 52 * numDecks
+              deck = createDeck(numDecks); // Pass numDecks to createDeck
+              shuffleDeck(deck);
+              cardsUsed = 0;
+              runningCount = 0;
+              updateRunningCountDisplay();
+          }
+          cardsUsed++;
+          const card = deck.pop();
+          updateRunningCount(card);
+          return card;
       }
+
 
       function updateRunningCount(card) {
         if (['10', 'J', 'Q', 'K', 'A'].includes(card.value)) {
@@ -211,6 +228,10 @@
 
       function updateRunningCountDisplay() {
         document.getElementById('runningCount').innerText = runningCount;
+      }
+
+      function updateShuffleCounterDisplay() {
+        document.getElementById('shuffleCounter').innerText = shuffleCount;
       }
 
       function getHandValue(hand) {
@@ -255,6 +276,7 @@
           losses++;
         } else {
           document.getElementById('message').innerText = "Push! It's a tie.";
+          pushes++;
         }
 
         document.getElementById('botBalance').innerText = botBalance;
@@ -278,6 +300,7 @@
       function updateStats() {
         document.getElementById('wins').innerText = wins;
         document.getElementById('losses').innerText = losses;
+        document.getElementById('pushes').innerText = pushes;
         const totalGames = wins + losses;
         const winPercentage = totalGames > 0 ? ((wins / totalGames) * 100).toFixed(2) : 0;
         document.getElementById('winPercentage').innerText = `${winPercentage}%`;
