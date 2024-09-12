@@ -44,6 +44,27 @@
         width: 200px;
         margin: 10px 0;
       }
+          table {
+      margin-top: 20px;
+      border-collapse: collapse;
+      width: 90%;
+    }
+
+    table,
+    th,
+    td {
+      border: 1px solid #ccc;
+    }
+
+    th,
+    td {
+      padding: 8px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
 
     </style>
   </head>
@@ -80,6 +101,21 @@
         <p id="message"></p>
       </div>
     </div>
+    
+    <table id="historyTable">
+      <thead>
+        <tr>
+          <th>Player's Cards</th>
+          <th>Dealer's Cards</th>
+          <th>Outcome</th>
+          <th>Bet Amount</th>
+          <th>Win Amount</th>
+        </tr>
+      </thead>
+    <tbody>
+      <!-- History rows will be appended here -->
+    </tbody>
+    </table>
 
     <script>
       let deck = [];
@@ -96,8 +132,8 @@
       let autoPlayInterval;
       let isAutoPlaying = false;
       let shuffleCount = 0; // shuffle Counter
-      const numDecks = 10;
-      const shuffleThreshold = 0.94;
+      const numDecks = 6;
+      const shuffleThreshold = 0.8;
       //const shuffleThreshold = 0.98;
 
       function resetGame() {
@@ -337,9 +373,9 @@
 
       function adjustBetSize() {
             if (trueCount >= 1) {
-                botBet = Math.max(25, Math.min(botBalance, 25 * (trueCount + 1)));
-            } else if (trueCount < 0) {
-                botBet = Math.max(10, 25 / (1 - trueCount)); // Less aggressive decrease
+                botBet = Math.max(25, Math.min(botBalance, 25 * (trueCount + 5)));
+            // } else if (trueCount < 0) {
+               // botBet = Math.max(10, 25 / (1 - trueCount)); // Less aggressive decrease
             } else {
                 botBet = 25; // Default bet when trueCount is between 0 and 1
             }
@@ -383,42 +419,82 @@
         const botBlackjack = (botValue === 21 && botHand.length === 2);
         const dealerBlackjack = (dealerValue === 21 && dealerHand.length === 2);
 
+        let outcome = "";
+        let winAmount = 0;
+
         if (botBlackjack && !dealerBlackjack) {
-          botBalance += botBet * 1.5; // Blackjack pays 3:2
-          //botBalance += botBet * 1.2; // Blackjack pays 6:5
-          document.getElementById('message').innerText = "Bot has Blackjack! Bot wins!";
-          wins++;
+            botBalance += botBet * 1.5;
+            outcome = "Bot has Blackjack! Bot wins!";
+            winAmount = botBet * 1.5;
+            wins++;
         } else if (dealerBlackjack && !botBlackjack) {
-          botBalance -= botBet;
-          document.getElementById('message').innerText = "Dealer has Blackjack! Bot loses.";
-          losses++;
+            botBalance -= botBet;
+            outcome = "Dealer has Blackjack! Bot loses.";
+            winAmount = -botBet;
+            losses++;
         } else if (botValue > 21) {
-          botBalance -= botBet;
-          document.getElementById('message').innerText = "Bot busts! Bot loses.";
-          losses++;
+            botBalance -= botBet;
+            outcome = "Bot busts! Bot loses.";
+            winAmount = -botBet;
+            losses++;
         } else if (dealerValue > 21) {
-          botBalance += botBet;
-          document.getElementById('message').innerText = "Dealer busts! Bot wins!";
-          wins++;
+            botBalance += botBet;
+            outcome = "Dealer busts! Bot wins!";
+            winAmount = botBet;
+            wins++;
         } else if (botValue > dealerValue) {
-          botBalance += botBet;
-          document.getElementById('message').innerText = "Bot wins!";
-          wins++;
+            botBalance += botBet;
+            outcome = "Bot wins!";
+            winAmount = botBet;
+            wins++;
         } else if (botValue < dealerValue) {
-          botBalance -= botBet;
-          document.getElementById('message').innerText = "Bot loses.";
-          losses++;
+            botBalance -= botBet;
+            outcome = "Bot loses.";
+            winAmount = -botBet;
+            losses++;
         } else {
-          document.getElementById('message').innerText = "Push! It's a tie.";
+            outcome = "Push! It's a tie.";
         }
 
+        document.getElementById('message').innerText = outcome;
         document.getElementById('botBalance').innerText = botBalance;
         botBet = 25; // Reset bet to default
         updateUI();
         gameActive = false;
         updateStats();
-      }
 
+        // Add history entry
+        addHistory(botHand, dealerHand, outcome, botBet, winAmount);
+    }
+
+    function addHistory(playerCards, dealerCards, outcome, betAmount, winAmount) {
+      const historyTableBody = document.getElementById('historyTable').querySelector('tbody');
+      const newRow = document.createElement('tr');
+
+      const playerCardsCell = document.createElement('td');
+      playerCardsCell.textContent = playerCards.map(card => `${card.value}${card.suit}`).join(', ');
+
+      const dealerCardsCell = document.createElement('td');
+      dealerCardsCell.textContent = dealerCards.map(card => `${card.value}${card.suit}`).join(', ');
+
+      const outcomeCell = document.createElement('td');
+      outcomeCell.textContent = outcome;
+
+      const betAmountCell = document.createElement('td');
+      betAmountCell.textContent = `$${betAmount}`;
+
+      const winAmountCell = document.createElement('td');
+      winAmountCell.textContent = `$${winAmount}`;
+
+      newRow.appendChild(playerCardsCell);
+      newRow.appendChild(dealerCardsCell);
+      newRow.appendChild(outcomeCell);
+      newRow.appendChild(betAmountCell);
+      newRow.appendChild(winAmountCell);
+
+      historyTableBody.appendChild(newRow);
+    }
+      
 
       function updateUI() {
         document.getElementById('botHand').innerText = `Bot: ${botHand.map(card => `${card.value}${card.suit}`).join(', ')}`;
