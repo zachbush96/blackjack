@@ -62,6 +62,7 @@
       <div class="status">
         <p id="dealerHand">Dealer: []</p>
         <p id="playerHand">Player: []</p>
+        <p id="botHand">Bot: []</p>
         <p id="playerHand2"></p>
         <p id="message"></p>
       </div>
@@ -80,6 +81,11 @@
       let doubledDown = false;
       let cardsUsed = 0;
       let runningCount = 0;
+      
+      //ChatGPT Bot Implementation
+      let botHand = [];
+      let botBalance = 5000;
+      let botBet = 25;
 
       function resetGame() {
             balance = 5000;
@@ -123,6 +129,7 @@
           }
           playerHand = [drawCard(), drawCard()];
           dealerHand = [drawCard(), drawCard()];
+          botHand = [drawCard(), drawCard()]; // Bot Implementation
           playerHand2 = [];
           splitActive = false;
           playingHand = 1;
@@ -134,8 +141,56 @@
               handleBlackjack();
           } else {
               updateUI();
+              botDecision();
           }
       }
+
+
+      function botDecision() {
+        const botHandValue = getHandValue(botHand);
+        const dealerVisibleCard = dealerHand[0].value;
+
+        if (botHandValue <= 11) {
+            hitBot();
+        } else if (botHandValue >= 17) {
+            standBot();
+        } else if (botHandValue >= 12 && botHandValue <= 16) {
+            if (['7', '8', '9', '10', 'J', 'Q', 'K', 'A'].includes(dealerVisibleCard)) {
+                hitBot();
+            } else {
+                standBot();
+            }
+        } else if (botHandValue === 10 || botHandValue === 11) {
+            if (['2', '3', '4', '5', '6'].includes(dealerVisibleCard)) {
+                doubleDownBot();
+            } else {
+                hitBot();
+            }
+        }
+      }
+
+    function hitBot() {
+        botHand.push(drawCard());
+        if (getHandValue(botHand) > 21) {
+            standBot();  // Bot stands automatically if it busts
+        }
+        updateUI();
+    }
+
+    function standBot() {
+        checkGameOver();  // Check the game result once the bot stands
+        updateUI();
+    }
+
+    function doubleDownBot() {
+        botBet *= 2;
+        hitBot();
+        standBot();  // Bot stands after doubling down
+    }
+
+
+
+
 
       function createDeck() {
           const suits = ['♠', '♥', '♦', '♣'];
@@ -324,6 +379,8 @@
 
       function updateUI() {
           document.getElementById('playerHand').innerText = `Player Hand 1: ${playerHand.map(card => `${card.value}${card.suit}`).join(', ')}`;
+          document.getElementById('botHand').innerText = `Bot: ${botHand.map(card => `${card.value}${card.suit}`).join(', ')}`;  // Display bot's hand
+          
           if (splitActive) {
               document.getElementById('playerHand2').innerText = `Player Hand 2: ${playerHand2.map(card => `${card.value}${card.suit}`).join(', ')}`;
           } else {
