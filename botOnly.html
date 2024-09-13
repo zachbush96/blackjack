@@ -391,15 +391,17 @@
       }
 
       function adjustBetSize() {
-            if (trueCount >= 1) {
-                botBet = Math.max(25, Math.min(botBalance, 25 * (trueCount + 5)));
-            // } else if (trueCount < 0) {
-               // botBet = Math.max(10, 25 / (1 - trueCount)); // Less aggressive decrease
-            } else {
-                botBet = 25; // Default bet when trueCount is between 0 and 1
-            }
-            document.getElementById('botBet').innerText = botBet;
-        }
+          let advantage = (trueCount - 1) * 0.5 / 100; // Assuming 0.5% advantage per true count above 1
+          if (advantage > 0) {
+              let kellyBet = botBalance * advantage;
+              botBet = Math.min(Math.max(25, kellyBet), botBalance);
+              botBet = Math.floor(botBet / 25) * 25; // Round to nearest $25 increment
+          } else {
+              botBet = 25; // Minimum bet when no advantage
+          }
+          document.getElementById('botBet').innerText = botBet;
+      }
+
 
 
 
