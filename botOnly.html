@@ -202,26 +202,28 @@
       }
 
       function handlePairSplit(botHandValue, dealerVisibleCard) {
-        if (botHandValue === 16) { // Two 8s
-          splitBot();
-        } else if (botHandValue === 22) { // Two Aces
-          splitBot();
-        } else if (botHandValue === 18 && !['7', '10', 'A'].includes(dealerVisibleCard)) {
-          splitBot(); // Split 9s against most dealer cards
-        } else if (botHandValue === 20) {
-          standBot(); // Stand on a pair of 10s (20)
-        } else if (botHandValue === 12 && ['2', '3', '4', '5', '6', '7'].includes(dealerVisibleCard)) {
-          splitBot(); // Split 6s against dealer's 2-7
-        } else if (botHandValue === 14 && ['2', '3', '4', '5', '6', '7'].includes(dealerVisibleCard)) {
-          splitBot(); // Split 7s against dealer's 2-7
-        } else if (botHandValue === 4 && ['5', '6'].includes(dealerVisibleCard)) {
-          splitBot(); // Split 2s against dealer's 5-6
-        } else if (botHandValue === 6 && ['2', '3', '4', '5', '6'].includes(dealerVisibleCard)) {
-          splitBot(); // Split 3s against dealer's 2-6
-        } else {
-          handleHardHand(botHandValue, dealerVisibleCard); // If no split, follow hard hand logic
-        }
+          let cardValue = botHand[0].value;
+          if (cardValue === 'A') {
+              splitBot();
+          } else if (cardValue === '8') {
+              splitBot();
+          } else if (cardValue === '9' && !['7', '10', 'A'].includes(dealerVisibleCard)) {
+              splitBot();
+          } else if (cardValue === '7' && ['2', '3', '4', '5', '6', '7'].includes(dealerVisibleCard)) {
+              splitBot();
+          } else if (cardValue === '6' && ['2', '3', '4', '5', '6'].includes(dealerVisibleCard)) {
+              splitBot();
+          } else if (cardValue === '2' || cardValue === '3') {
+              if (['2', '3', '4', '5', '6', '7'].includes(dealerVisibleCard)) {
+                  splitBot();
+              } else {
+                  hitBot();
+              }
+          } else {
+              handleHardHand(botHandValue, dealerVisibleCard);
+          }
       }
+
 
 
       function handleSoftHand(botHandValue, dealerVisibleCard) {
@@ -377,7 +379,7 @@
       }
 
       function updateTrueCount() {
-        const decksRemaining = (deck.length + 52 * numDecks - cardsUsed) / 52;
+        const decksRemaining = ((numDecks * 52) - cardsUsed) / 52;
         trueCount = Math.round(runningCount / decksRemaining);
       }
 
