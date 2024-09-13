@@ -250,31 +250,45 @@
           } else {
             standBot();
           }
-        } else {
+        } else if (botHandValue >= 17) { 
+          standBot();
+        }else {
           standBot();
         }
       }
 
       function splitBot() {
-        // When splitting, the bot creates two hands and plays them sequentially
+        if(botBalance < botBet) {
+          // Not enough balance to split
+          handleHardHand(getHandValue(botHand), dealerHand[0].value);
+          return;
+        }
+        botBalance -= botBet; // Deduct the additional bet
         let firstCard = botHand[0];
         let secondCard = botHand[1];
-
         // Create two new hands
         let hand1 = [firstCard, drawCard()];
         let hand2 = [secondCard, drawCard()];
-
         // Play the first hand
-        botHand = hand1;
-        updateUI();
-        botDecision();
-
-        // After finishing the first hand, play the second hand
-        botHand = hand2;
-        updateUI();
-        botDecision();
+        playHand(hand1);
+        playHand(hand2);
       }
 
+      function playHand(hand) {
+        botHand = hand;
+        updateUI();
+        if (isPair(botHand) && canSplit(botHand[0].value)) {
+          splitBot();
+        } else {
+          botDecision();
+        }
+      }
+
+      function canSplit(cardValue) {
+        // Define splitting rules based on card value
+        // Return true if splitting is allowed
+        return true; // Simplified for illustration
+      }
 
       function hitBot() {
         botHand.push(drawCard());
@@ -298,13 +312,18 @@
       }
 
       function doubleDownBot() {
-        botBet *= 2;
-        updateUI(); // ChatGPT Suggestion 
-        //document.getElementById('botBet').innerText = botBet; // ChatGPT Suggestion
+       if (botBalance < botBet) {
+        // Not enough balance to double down
         hitBot();
-        standBot();
-        botBet = 25; //Reset bet amount after doubleing down (chatGPT recomendation)
-        updateUI(); // ChatGPT suggestion
+        return;
+       }
+       botBalance -= botBet; // Deduct the additional bet
+       botBet *= 2;
+       updateUI();
+       hitBot();
+       standBot();
+       botBet = 25; // Reset bet amount after doubleing down
+       updateUI();
       }
 
       function createDeck(numDecks = 6) {
