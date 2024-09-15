@@ -84,7 +84,7 @@
                 const cardContainer = document.getElementById('card-container');
 
                 files.forEach(file => {
-                    if (file.name.endsWith('.html')) {
+                    if (file.name.endsWith('.html') && file.name !== "index.html") {
                         const card = document.createElement('div');
                         card.className = 'card';
 
@@ -99,11 +99,11 @@
                         // If title == botOnly, replace the text with BlackJack Bot
 												// If title == index, replace the text with Blackjack
                         title.textContent = file.name.replace('.html', '').replace(/-/g, ' ');
-												if (title.textContent == 'botOnly') {
-													title.textContent = 'BlackJack Bot';
-												} if (title.textContent == 'index') {
-													title.textContent = 'Blackjack';
-												}
+			if (title.textContent == 'botOnly') {
+				title.textContent = 'BlackJack Bot';
+			} if (title.textContent == 'index') {
+				title.textContent = 'Blackjack';
+			}
 
                         const overview = document.createElement('p');
                         overview.textContent = 'Project overview goes here...'; // You can manually add the overview here
