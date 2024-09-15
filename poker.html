@@ -51,7 +51,7 @@
 <body>
     <h1>Video Poker 1.1</h1>
     <div id="bankroll">Bankroll: $100</div>
-    <div id="resultsMessage"></div>"
+    <div id="resultsMessage"></div>
     <div id="cards">
         <div class="card" data-index="0">?</div>
         <div class="card" data-index="1">?</div>
@@ -70,7 +70,8 @@ let playerHand = [];
 let heldCards = [false, false, false, false, false];
 let bankroll = 100;
 let gameState = 'deal';
-
+			
+let resultMessage = document.getElementById('resultsMessage');
 const cardElements = document.querySelectorAll('.card');
 const dealButton = document.getElementById('deal-button');
 const drawButton = document.getElementById('draw-button');
@@ -90,6 +91,11 @@ const paytable = {
     "No Win": -1
 };
 
+fucntion updateResultsMessage(message) {
+	resultMessage.textContent = message;
+}
+
+			
 function createDeck() {
     const suits = ['♠', '♥', '♦', '♣'];
     const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
@@ -133,7 +139,8 @@ document.addEventListener('keydown', (e) => {
 });
 
 function handleEnterKeyPress() {
-    if (gameState === 'deal') {
+    console.log("Enter Key Pressed");
+		if (gameState === 'deal') {
         dealButton.click();
     } else if (gameState === 'draw') {
         drawButton.click();
@@ -179,6 +186,7 @@ function evaluateHand() {
     bankroll += payout;
     bankrollElement.textContent = `Bankroll: $${bankroll}`;
     //alert(`Hand: ${handRank} | Payout: $${payout}`);
+		updateResultsMessage(`Hand: ${handRank} | Payout: $${payout}`);
     highlightWinningCards(winningIndices);
     dealButton.disabled = false;
 }
