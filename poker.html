@@ -85,7 +85,8 @@ const paytable = {
     "Straight": 4,
     "Three of a Kind": 3,
     "Two Pair": 2,
-    "Jacks or Better": 1
+    "Jacks or Better": 1,
+    "No Win": -1
 };
 
 function createDeck() {
@@ -176,7 +177,7 @@ function evaluateHand() {
     const payout = paytable[handRank] || 0;
     bankroll += payout;
     bankrollElement.textContent = `Bankroll: $${bankroll}`;
-    alert(`Hand: ${handRank} | Payout: $${payout}`);
+    //alert(`Hand: ${handRank} | Payout: $${payout}`);
     highlightWinningCards(winningIndices);
     dealButton.disabled = false;
 }
