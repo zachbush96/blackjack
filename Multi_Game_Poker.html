@@ -25,6 +25,10 @@
         margin: 15px 0;
     }
 
+    .result {
+      padding: 5px;
+    }
+
     #gameRules {
         max-width: 600px;
         margin: 20px auto;
@@ -175,7 +179,7 @@
         border-radius: 5px;
         padding: 10px;
         background-color: rgba(255, 255, 255, 0.05);
-        width: 200px; /* Adjust as needed */
+        width: 250px; /* Adjust as needed */
         flex-shrink: 0;
     }
 
@@ -298,7 +302,7 @@
         "No Win": -1
     };
     
-    let numAdditionalGames = 3; // Number of additional games
+    let numAdditionalGames = 30; // Number of additional games
     let additionalGames = [];   // Array to store additional game objects
     
     cardElements.forEach((card, index) => {
@@ -659,7 +663,14 @@
         game.hand.forEach((card, cardIndex) => {
             const cardElement = document.createElement('div');
             cardElement.classList.add('card');
-    
+            
+            if (!game.heldCards[cardIndex]) {
+              // Only animate the newly revealed cards
+              cardElement.classList.remove('replaced');
+              void cardElement.offsetWidth;
+              cardElement.classList.add('replaced');
+            }
+
             cardElement.innerHTML = `
                 <span class="card-suit top-left">${card.suit}</span>
                 <span class="card-value">${card.value}</span>
