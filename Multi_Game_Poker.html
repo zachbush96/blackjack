@@ -112,7 +112,20 @@
     }
 
     .replaced {
-        animation: cardReplace .5s ease;
+        /*animation: cardReplace .5s ease;*/
+        animation: cardReplace 1s ease;
+    }
+
+    #additional-games-container {
+        /*max-height: 300px; /* Adjust height as needed */
+        overflow-x: scroll;
+        margin: 20px auto;
+        width: 100%;
+        max-width: 100%; /* Adjust as needed */
+        background-color: rgba(44, 62, 80, 0.5);
+        padding: 10px;
+        border-radius: 10px;
+        white-space: nowrap;
     }
 
     @keyframes cardReplace {
@@ -150,17 +163,20 @@
     /* Styles for additional games */
     #additional-games {
         display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
+        flex-wrap: nowrap;
+        /*justify-content: center; */
+        flex-direction: row;
         gap: 10px;
     }
 
     .additional-game {
+        display: inline-block;
         border: 1px solid #ecf0f1;
         border-radius: 5px;
         padding: 10px;
         background-color: rgba(255, 255, 255, 0.05);
         width: 200px; /* Adjust as needed */
+        flex-shrink: 0;
     }
 
     .additional-game h3 {
@@ -246,10 +262,11 @@
     </div>
         <!-- Add this after the main game cards -->
     <h2>Additional Games</h2>
-    <div id="additional-games">
-        <!-- Additional games will be displayed here -->
+    <div id="additional-games-container">
+        <div id="additional-games">
+            <!-- Additional games will be displayed here -->
+        </div>
     </div>
-
     <div>
         <button id="deal-button">Deal</button>
         <button id="draw-button" disabled>Draw</button>
@@ -281,7 +298,7 @@
         "No Win": -1
     };
     
-    let numAdditionalGames = 5; // Number of additional games
+    let numAdditionalGames = 3; // Number of additional games
     let additionalGames = [];   // Array to store additional game objects
     
     cardElements.forEach((card, index) => {
@@ -398,6 +415,7 @@
         }
         bankrollElement.textContent = `Bankroll: $${bankroll}`;
         setCookie('bankroll', bankroll, 1);
+        displayAdditionalGames(); // Update the additional games with the held cards
     }
     
     function isSequential(values) {
@@ -431,8 +449,23 @@
                     const cardElement = document.createElement('div');
                     cardElement.classList.add('card');
 
-                    // If the card object is empty, show "?"
-                    if (!card.value || !card.suit) {
+                    if (heldCards[cardIndex]) {
+                        const heldCard = playerHand[cardIndex];
+                        cardElement.innerHTML = `
+                            <span class="card-suit top-left">${heldCard.suit}</span>
+                            <span class="card-value">${heldCard.value}</span>
+                            <span class="card-suit bottom-right">${heldCard.suit}</span>
+                        `;
+                        cardElement.classList.add('held');
+
+                        // Apply correct color class
+                        cardElement.classList.remove('red', 'black');
+                        if (heldCard.suit === '♥' || heldCard.suit === '♦') {
+                            cardElement.classList.add('red');
+                        } else {
+                            cardElement.classList.add('black');
+                        }
+                    } else if (!card.value || !card.suit) {
                         cardElement.innerHTML = `?`;
                     } else {
                         cardElement.innerHTML = `
@@ -441,11 +474,7 @@
                             <span class="card-suit bottom-right">${card.suit}</span>
                         `;
 
-                        if (game.heldCards[cardIndex]) {
-                            cardElement.classList.add('held');
-                        }
-
-                        // Apply red or black class
+                        // Apply correct color class for non-held cards
                         cardElement.classList.remove('red', 'black');
                         if (card.suit === '♥' || card.suit === '♦') {
                             cardElement.classList.add('red');
