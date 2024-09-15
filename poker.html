@@ -223,7 +223,7 @@
 let deck = [];
 let playerHand = [];
 let heldCards = [false, false, false, false, false];
-let bankroll = 100;
+//let bankroll = 100;
 let gameState = 'deal';
 			
 let resultMessage = document.getElementById('resultsMessage');
@@ -247,6 +247,8 @@ const paytable = {
 };
 
 
+
+			
 cardElements.forEach((card, index) => {
 //    card.addEventListener('click', () => {
 //        console.log("Card Clicked");
@@ -263,6 +265,32 @@ cardElements.forEach((card, index) => {
 })
 
 
+function setCookie(name, value, days){
+  let expires = "";
+	if (days) {
+		const date = new Date();
+		date.setTime(date.getTime() + (days*24*60*60*1000));
+		expires = "; expires=" + date.toUTCString();
+	}	
+	document.cookie = name + "=" + (value || "")  + expires + "; path=/";
+}
+
+function getCookie(name) {
+	const nameEQ = name + "=";
+	const ca = document.cookie.split(';');
+	for(let i=0;i < ca.length;i++) {
+		let c = ca[i];
+		while (c.charAt(0)==' ') c = c.substring(1,c.length);
+		if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+	}
+	return null;
+}
+
+let bankroll = parseInt(getCookie("bankroll")) || 100;
+document.addEventListener('DOMContentLoaded', () => {
+	bankrollElement.textContent = `Bankroll: $${bankroll}`;
+});
+			
 function updateResultsMessage(message) {
 	resultMessage.textContent = message;
 }
@@ -310,6 +338,7 @@ function updateDisplay() {
         }
     }
     bankrollElement.textContent = `Bankroll: $${bankroll}`;
+		setCookie('bankroll', bankroll, 1); // Save the bankroll for 1 day
 }
 
 document.addEventListener('keydown', (e) => {
@@ -357,6 +386,7 @@ drawButton.addEventListener('click', () => {
 
 resetButton.addEventListener('click', () => {
     bankroll = 100;
+		setCookie('bankroll', bankroll, 1);
     dealButton.disabled = false;
     drawButton.disabled = true;
     bankrollElement.textContent = `Bankroll: $${bankroll}`;
@@ -372,6 +402,7 @@ function evaluateHand() {
     const payout = paytable[handRank] || 0;
     bankroll += payout;
     bankrollElement.textContent = `Bankroll: $${bankroll}`;
+		setCookie('bankroll', bankroll, 1);
 		updateResultsMessage(`Hand: ${handRank} | Payout: $${payout}`);
     highlightWinningCards(winningIndices);
     dealButton.disabled = false;
