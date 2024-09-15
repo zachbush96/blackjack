@@ -170,14 +170,17 @@
 
     .additional-game .cards {
         display: flex;
+        flex-wrap: wrap;
         gap: 5px;
+        justify-content: center;
     }
 
     .additional-game .card {
-        max-width: 50px;
+        max-width: 30px;
         min-width: 30px;
         font-size: 0.8rem;
         padding: 5px;
+        flex: 1 0 auto;
     }
 
     .additional-game .card .card-value {
@@ -466,7 +469,10 @@
                 game.heldCards = heldCards.slice();
             });
             displayAdditionalGames();
-        } else if (key === 'Enter') {
+        } else if (key === 'r') {
+            resetButton.click();
+        }
+        else if (key === 'Enter') {
             handleEnterKeyPress();
         }
     });
