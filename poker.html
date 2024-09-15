@@ -111,7 +111,9 @@ function createDeck() {
 }
 
 function dealCards() {
-    playerHand = deck.splice(0, 5);
+    // if there is a message, clear it
+		updateResultsMessage(" ");
+		playerHand = deck.splice(0, 5);
     heldCards = [false, false, false, false, false];
     updateDisplay();
     gameState = 'draw';
