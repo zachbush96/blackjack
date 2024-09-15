@@ -285,16 +285,16 @@
     let additionalGames = [];   // Array to store additional game objects
     
     cardElements.forEach((card, index) => {
-        card.addEventListener('click', () => {
-            heldCards[index] = !heldCards[index];
-            updateDisplay();
+        //card.addEventListener('click', () => {
+            //heldCards[index] = !heldCards[index];
+            //updateDisplay();
     
             // Update held cards in additional games
-            additionalGames.forEach(game => {
-                game.heldCards = heldCards.slice();
-            });
-            displayAdditionalGames();
-        });
+            //additionalGames.forEach(game => {
+                //game.heldCards = heldCards.slice();
+            //});
+            //displayAdditionalGames();
+        //});
     
         // Add touch event for mobile devices
         card.addEventListener('touchstart', () => {
