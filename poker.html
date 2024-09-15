@@ -10,6 +10,9 @@
             text-align: center;
             background-color: #2c3e50;
             color: white;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
         }
         .card {
             display: inline-block;
@@ -21,6 +24,7 @@
             font-size: 24px;
             background-color: #34495e;
             transition: all 0.3s ease;
+            user-select: none;
         }
         .held {
             border: 3px solid #e74c3c;
@@ -43,7 +47,7 @@
         }
 
         #bankroll {
-            font-size: 20px;
+            font-size: 4vw;
             margin: 20px 0;
         }
         button {
@@ -57,13 +61,15 @@
             color: white;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
             transition: all 0.3s ease;
+            max-width: 100%;
+            width: 40vw;
         }
-				button:disabled {
-						/* Remove the background gradient */
-						background: none;
-						/* Set the text color to white */
-						color: white;
-				}
+		button:disabled {
+			/* Remove the background gradient */
+			background: none;
+			/* Set the text color to white */
+			color: white;
+		}
         
     </style>
 </head>
@@ -125,6 +131,21 @@ const paytable = {
     "Jacks or Better": 1,
     "No Win": -1
 };
+
+
+cardElements.forEach((card, index) => {
+    card.addEventListener('click', () => {
+        heldCards[index] = !heldCards[index];
+        updateDisplay();
+    });
+
+    // Add touch event for mobile devices
+    card.addEventListener('touchstart', () => {
+        heldCards[index] = !heldCards[index];
+        updateDisplay();
+    })
+})
+
 
 function updateResultsMessage(message) {
 	resultMessage.textContent = message;
