@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Game Projects</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .card-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            gap: 20px;
+        }
+        .card {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 300px;
+            width: 100%;
+            overflow: hidden;
+            text-align: center;
+        }
+        .card img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-bottom: 1px solid #ddd;
+        }
+        .card-content {
+            padding: 20px;
+        }
+        .card-content h2 {
+            font-size: 20px;
+            margin: 0 0 10px;
+        }
+        .card-content p {
+            font-size: 16px;
+            margin: 0 0 15px;
+            color: #555;
+            height: 60px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .card-content button {
+            background-color: #007acc;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        .card-content button:hover {
+            background-color: #005f99;
+        }
+    </style>
+</head>
+<body>
+    <h1>My Game Projects</h1>
+    <div class="card-container" id="card-container">
+        <!-- Project cards will be inserted here by JavaScript -->
+    </div>
+
+    <script>
+        async function fetchFiles() {
+            const repo = 'zachbush96/blackjack';
+            const apiUrl = `https://api.github.com/repos/${repo}/contents/`;
+
+            try {
+                const response = await fetch(apiUrl);
+                const files = await response.json();
+                const cardContainer = document.getElementById('card-container');
+
+                files.forEach(file => {
+                    if (file.name.endsWith('.html')) {
+                        const card = document.createElement('div');
+                        card.className = 'card';
+
+                        //const img = document.createElement('img');
+                        //img.src = 'placeholder.png'; // Replace with actual preview images later
+                        //img.alt = `${file.name} preview`;
+
+                        const cardContent = document.createElement('div');
+                        cardContent.className = 'card-content';
+
+                        const title = document.createElement('h2');
+                        // If title == botOnly, replace the text with BlackJack Bot
+												// If title == index, replace the text with Blackjack
+                        title.textContent = file.name.replace('.html', '').replace(/-/g, ' ');
+												if (title.textContent == 'botOnly') {
+													title.textContent = 'BlackJack Bot';
+												} if (title.textContent == 'index') {
+													title.textContent = 'Blackjack';
+												}
+
+                        const overview = document.createElement('p');
+                        overview.textContent = 'Project overview goes here...'; // You can manually add the overview here
+
+                        const button = document.createElement('button');
+                        button.textContent = 'Visit Page';
+                        button.onclick = () => window.location.href = file.name;
+
+                        cardContent.appendChild(title);
+                        cardContent.appendChild(overview);
+                        cardContent.appendChild(button);
+
+                        //card.appendChild(img);
+                        card.appendChild(cardContent);
+
+                        cardContainer.appendChild(card);
+                    }
+                });
+            } catch (error) {
+                console.error('Error fetching files:', error);
+            }
+        }
+
+        fetchFiles();
+    </script>
+</body>
+</html>
