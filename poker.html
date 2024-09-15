@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Poker 1.1</title>
+    <title>Video Poker 1.2</title>
 <style>
     body {
         font-family: Arial, sans-serif;
@@ -44,7 +44,7 @@
         flex-wrap: nowrap;
         gap: 10px;
         margin: 20px auto;
-        max-width: 65%;
+        max-width: 100%;
     }
 
     .card {
@@ -56,13 +56,49 @@
         border: 2px solid #ecf0f1;
         border-radius: 10px;
         font-size: 1.5rem;
-        background-color: #34495e;
+        background-color: #ffffff;
         transition: all 0.3s ease;
         user-select: none;
         display: flex;
         justify-content: center;
         align-items: center;
-        padding: 5px;
+        flex-direction: column;
+        padding: 10px;
+        color: black;
+        position: relative;
+    }
+
+    .card .card-value {
+        font-size: 2.5rem;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+    .card .card-suit {
+        font-size: 1.5rem;
+        position: absolute;
+    }
+
+    .card .card-suit.top-left {
+        top: 5px;
+        left: 5px;
+    }
+
+    .card .card-suit.bottom-right {
+        bottom: 5px;
+        right: 5px;
+    }
+
+    .card.red .card-suit, 
+    .card.red .card-value {
+        color: red;
+    }
+
+    .card.black .card-suit, 
+    .card.black .card-value {
+        color: black;
     }
 
     .held {
@@ -125,12 +161,20 @@
         }
 
         #cards {
-            max-width: 100%;
+            gap: 5px;
         }
 
         .card {
-            font-size: 1.2rem;
             min-width: 40px;
+            padding: 5px;
+        }
+
+        .card .card-value {
+            font-size: 1.8rem;
+        }
+
+        .card .card-suit {
+            font-size: 1.2rem;
         }
 
         button {
@@ -139,6 +183,7 @@
         }
     }
 </style>
+
 
 
 </head>
@@ -249,10 +294,20 @@ function dealCards() {
 function updateDisplay() {
     for (let i = 0; i < 5; i++) {
         const card = playerHand[i];
-        cardElements[i].textContent = `${card.value}${card.suit}`;
-        cardElements[i].classList.toggle('held', heldCards[i]);
-        //cardElements[i].classList.remove('winning', 'replaced');
-        cardElements[i].classList.remove('winning');
+        const cardElement = cardElements[i];
+        cardElement.innerHTML = `
+            <span class="card-suit top-left">${card.suit}</span>
+            <span class="card-value">${card.value}</span>
+            <span class="card-suit bottom-right">${card.suit}</span>
+        `;
+        cardElement.classList.toggle('held', heldCards[i]);
+        cardElement.classList.remove('winning');
+        cardElement.classList.remove('red', 'black');
+        if (card.suit === '♥' || card.suit === '♦') {
+            cardElement.classList.add('red');
+        } else {
+            cardElement.classList.add('black');
+        }
     }
     bankrollElement.textContent = `Bankroll: $${bankroll}`;
 }
@@ -306,7 +361,7 @@ resetButton.addEventListener('click', () => {
     drawButton.disabled = true;
     bankrollElement.textContent = `Bankroll: $${bankroll}`;
     cardElements.forEach(card => {
-        card.textContent = '?';
+        card.innerHTML = '?';
         card.classList.remove('held', 'winning', 'replaced');
     });
     gameState = 'deal';
@@ -317,7 +372,6 @@ function evaluateHand() {
     const payout = paytable[handRank] || 0;
     bankroll += payout;
     bankrollElement.textContent = `Bankroll: $${bankroll}`;
-    //alert(`Hand: ${handRank} | Payout: $${payout}`);
 		updateResultsMessage(`Hand: ${handRank} | Payout: $${payout}`);
     highlightWinningCards(winningIndices);
     dealButton.disabled = false;
