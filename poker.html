@@ -203,13 +203,15 @@ const paytable = {
 
 
 cardElements.forEach((card, index) => {
-    card.addEventListener('click', () => {
-        heldCards[index] = !heldCards[index];
-        updateDisplay();
-    });
+//    card.addEventListener('click', () => {
+//        console.log("Card Clicked");
+//        heldCards[index] = !heldCards[index];
+//        updateDisplay();
+//    });
 
     // Add touch event for mobile devices
     card.addEventListener('touchstart', () => {
+        console.log("Card Touched");
         heldCards[index] = !heldCards[index];
         updateDisplay();
     })
