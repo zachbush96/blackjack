@@ -398,6 +398,18 @@
         setCookie('bankroll', bankroll, 1);
     }
     
+    function isSequential(values) {
+            const valueOrder = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+            const sortedValues = values.slice().sort((a, b) => valueOrder.indexOf(a) - valueOrder.indexOf(b));
+            for (let i = 0; i < sortedValues.length - 1; i++) {
+                if (valueOrder.indexOf(sortedValues[i + 1]) - valueOrder.indexOf(sortedValues[i]) !== 1) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+
     function displayAdditionalGames() {
         const additionalGamesContainer = document.getElementById('additional-games');
         additionalGamesContainer.innerHTML = '';
@@ -534,9 +546,54 @@
     }
     
     function getHandRank(hand) {
-        // Existing logic for evaluating the hand
-        // ...
+        const values = hand.map(card => card.value);
+        const suits = hand.map(card => card.suit);
+        const valueCounts = {};
+        const suitCounts = {};
+        
+        values.forEach(value => {
+            valueCounts[value] = (valueCounts[value] || 0) + 1;
+        });
+        suits.forEach(suit => {
+            suitCounts[suit] = (suitCounts[suit] || 0) + 1;
+        });
+        
+        const valueCountArray = Object.values(valueCounts);
+        const isFlush = Object.keys(suitCounts).length === 1;
+        const isStraight = isSequential(values);
+        
+        if (isFlush && isStraight && values.includes('A') && values.includes('K')) 
+            return { handRank: "Royal Flush", winningIndices: [0, 1, 2, 3, 4] };
+        if (isFlush && isStraight) 
+            return { handRank: "Straight Flush", winningIndices: [0, 1, 2, 3, 4] };
+        if (valueCountArray.includes(4)) {
+            const fourOfAKindValue = Object.keys(valueCounts).find(key => valueCounts[key] === 4);
+            return { handRank: "Four of a Kind", winningIndices: values.map((v, i) => v === fourOfAKindValue ? i : -1).filter(i => i !== -1) };
+        }
+        if (valueCountArray.includes(3) && valueCountArray.includes(2)) 
+            return { handRank: "Full House", winningIndices: [0, 1, 2, 3, 4] };
+        if (isFlush) 
+            return { handRank: "Flush", winningIndices: [0, 1, 2, 3, 4] };
+        if (isStraight) 
+            return { handRank: "Straight", winningIndices: [0, 1, 2, 3, 4] };
+        if (valueCountArray.includes(3)) {
+            const threeOfAKindValue = Object.keys(valueCounts).find(key => valueCounts[key] === 3);
+            return { handRank: "Three of a Kind", winningIndices: values.map((v, i) => v === threeOfAKindValue ? i : -1).filter(i => i !== -1) };
+        }
+        if (valueCountArray.filter(count => count === 2).length === 2) {
+            const pairValues = Object.keys(valueCounts).filter(key => valueCounts[key] === 2);
+            return { handRank: "Two Pair", winningIndices: values.map((v, i) => pairValues.includes(v) ? i : -1).filter(i => i !== -1) };
+        }
+        if (valueCountArray.includes(2)) {
+            const pairValue = Object.keys(valueCounts).find(key => valueCounts[key] === 2);
+            if (['J', 'Q', 'K', 'A'].includes(pairValue)) {
+                return { handRank: "Jacks or Better", winningIndices: values.map((v, i) => v === pairValue ? i : -1).filter(i => i !== -1) };
+            }
+        }
+        
+        return { handRank: "No Win", winningIndices: [] };
     }
+
     
     function highlightWinningCards(indices) {
         indices.forEach(index => {
@@ -581,6 +638,8 @@
     
             cardsDiv.appendChild(cardElement);
         });
+
+
     
         // Display the result for this game
         let resultDiv = gameDiv.querySelector('.result');
