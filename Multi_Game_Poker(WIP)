@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Poker 1.2</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        background-color: #2c3e50;
+        color: white;
+        margin: 0;
+        padding: 20px;
+        overflow-x: hidden;
+    }
+
+    h1 {
+        font-size: 2.5rem;
+        margin-bottom: 20px;
+    }
+
+    #bankroll, #resultsMessage {
+        font-size: 1.5rem;
+        margin: 15px 0;
+    }
+
+    #gameRules {
+        max-width: 600px;
+        margin: 20px auto;
+        padding: 15px;
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+    }
+
+    #gameRules h2 {
+        margin-top: 0;
+    }
+
+    #cards {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: nowrap;
+        gap: 10px;
+        margin: 20px auto;
+        max-width: 100%;
+    }
+
+    .card {
+        flex: 1 1 0;
+        aspect-ratio: 2/3;
+        max-width: 120px;
+        min-width: 60px;
+        height: auto;
+        border: 2px solid #ecf0f1;
+        border-radius: 10px;
+        font-size: 1.5rem;
+        background-color: #ffffff;
+        transition: all 0.3s ease;
+        user-select: none;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        padding: 10px;
+        color: black;
+        position: relative;
+    }
+
+    .card .card-value {
+        font-size: 2.5rem;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+    .card .card-suit {
+        font-size: 1.5rem;
+        position: absolute;
+    }
+
+    .card .card-suit.top-left {
+        top: 5px;
+        left: 5px;
+    }
+
+    .card .card-suit.bottom-right {
+        bottom: 5px;
+        right: 5px;
+    }
+
+    .card.red .card-suit, 
+    .card.red .card-value {
+        color: red;
+    }
+
+    .card.black .card-suit, 
+    .card.black .card-value {
+        color: black;
+    }
+
+    .held {
+        border: 3px solid #e74c3c;
+        box-shadow: 0 0 10px #e74c3c;
+    }
+
+    .winning {
+        border: 3px solid #2ecc71;
+        box-shadow: 0 0 10px #2ecc71;
+    }
+
+    .replaced {
+        animation: cardReplace .5s ease;
+    }
+
+    @keyframes cardReplace {
+        0% { transform: rotateY(0deg); }
+        50% { transform: rotateY(90deg); }
+        100% { transform: rotateY(0deg); }
+    }
+
+    button {
+        padding: 12px 24px;
+        margin: 10px;
+        font-size: 1rem;
+        cursor: pointer;
+        border: none;
+        border-radius: 5px;
+        background: linear-gradient(45deg, #3498db, #2ecc71);
+        color: white;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        transition: all 0.3s ease;
+        max-width: 200px;
+        width: 100%;
+    }
+
+    button:disabled {
+        background: #95a5a6;
+        color: #ecf0f1;
+        cursor: not-allowed;
+    }
+
+    button:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Styles for additional games */
+    #additional-games {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .additional-game {
+        border: 1px solid #ecf0f1;
+        border-radius: 5px;
+        padding: 10px;
+        background-color: rgba(255, 255, 255, 0.05);
+        width: 200px; /* Adjust as needed */
+    }
+
+    .additional-game h3 {
+        font-size: 1rem;
+        margin-bottom: 5px;
+    }
+
+    .additional-game .cards {
+        display: flex;
+        gap: 5px;
+    }
+
+    .additional-game .card {
+        max-width: 50px;
+        min-width: 30px;
+        font-size: 0.8rem;
+        padding: 5px;
+    }
+
+    .additional-game .card .card-value {
+        font-size: 1rem;
+    }
+
+    .additional-game .card .card-suit {
+        font-size: 0.7rem;
+    }
+
+
+    @media (max-width: 768px) {
+        body {
+            padding: 10px;
+        }
+
+        h1 {
+            font-size: 2rem;
+        }
+
+        #bankroll, #resultsMessage {
+            font-size: 1.2rem;
+        }
+
+        #cards {
+            gap: 5px;
+        }
+
+        .card {
+            min-width: 40px;
+            padding: 5px;
+        }
+
+        .card .card-value {
+            font-size: 1.8rem;
+        }
+
+        .card .card-suit {
+            font-size: 1.2rem;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 0.9rem;
+        }
+    }
+</style>
+
+
+
+</head>
+<body>
+    <h1>Video Poker 1.2</h1>
+    <div id="bankroll">Bankroll: $100</div>
+    <div id="resultsMessage"></div>
+		
+    <div id="cards">
+        <div class="card" data-index="0">?</div>
+        <div class="card" data-index="1">?</div>
+        <div class="card" data-index="2">?</div>
+        <div class="card" data-index="3">?</div>
+        <div class="card" data-index="4">?</div>
+    </div>
+        <!-- Add this after the main game cards -->
+    <h2>Additional Games</h2>
+    <div id="additional-games">
+        <!-- Additional games will be displayed here -->
+    </div>
+
+    <div>
+        <button id="deal-button">Deal</button>
+        <button id="draw-button" disabled>Draw</button>
+        <button id="reset-button">Reset</button>
+    </div>
+    <script>
+    let deck = [];
+    let playerHand = [];
+    let heldCards = [false, false, false, false, false];
+    let gameState = 'deal';
+    
+    let resultMessage = document.getElementById('resultsMessage');
+    const cardElements = document.querySelectorAll('.card');
+    const dealButton = document.getElementById('deal-button');
+    const drawButton = document.getElementById('draw-button');
+    const resetButton = document.getElementById('reset-button');
+    const bankrollElement = document.getElementById('bankroll');
+    
+    const paytable = {
+        "Royal Flush": 250,
+        "Straight Flush": 50,
+        "Four of a Kind": 25,
+        "Full House": 9,
+        "Flush": 6,
+        "Straight": 4,
+        "Three of a Kind": 3,
+        "Two Pair": 2,
+        "Jacks or Better": 1,
+        "No Win": -1
+    };
+    
+    let numAdditionalGames = 5; // Number of additional games
+    let additionalGames = [];   // Array to store additional game objects
+    
+    cardElements.forEach((card, index) => {
+        card.addEventListener('click', () => {
+            heldCards[index] = !heldCards[index];
+            updateDisplay();
+    
+            // Update held cards in additional games
+            additionalGames.forEach(game => {
+                game.heldCards = heldCards.slice();
+            });
+            displayAdditionalGames();
+        });
+    
+        // Add touch event for mobile devices
+        card.addEventListener('touchstart', () => {
+            heldCards[index] = !heldCards[index];
+            updateDisplay();
+    
+            // Update held cards in additional games
+            additionalGames.forEach(game => {
+                game.heldCards = heldCards.slice();
+            });
+            displayAdditionalGames();
+        });
+    });
+    
+    function setCookie(name, value, days){
+        let expires = "";
+        if (days) {
+            const date = new Date();
+            date.setTime(date.getTime() + (days*24*60*60*1000));
+            expires = "; expires=" + date.toUTCString();
+        }	
+        document.cookie = name + "=" + (value || "")  + expires + "; path=/";
+    }
+    
+    function getCookie(name) {
+        const nameEQ = name + "=";
+        const ca = document.cookie.split(';');
+        for(let i=0;i < ca.length;i++) {
+            let c = ca[i];
+            while (c.charAt(0)==' ') c = c.substring(1,c.length);
+            if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+        }
+        return null;
+    }
+    
+    let bankroll = parseInt(getCookie("bankroll")) || 100;
+    document.addEventListener('DOMContentLoaded', () => {
+        bankrollElement.textContent = `Bankroll: $${bankroll}`;
+    });
+    
+    function updateResultsMessage(message) {
+        resultMessage.textContent = message;
+    }
+    
+    function createDeck() {
+        const suits = ['♠', '♥', '♦', '♣'];
+        const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+        let newDeck = [];
+    
+        for (let suit of suits) {
+            for (let value of values) {
+                newDeck.push({ value, suit });
+            }
+        }
+    
+        newDeck.sort(() => Math.random() - 0.5);
+        return newDeck;
+    }
+    
+    function dealCards() {
+        // Clear previous message
+        updateResultsMessage(" ");
+    
+        // Main game
+        deck = createDeck();
+        playerHand = deck.splice(0, 5);
+        heldCards = [false, false, false, false, false];
+        updateDisplay();
+        gameState = 'draw';
+    
+        // Initialize additional games
+        additionalGames = [];
+        for (let i = 0; i < numAdditionalGames; i++) {
+            let gameDeck = createDeck();
+            let gameHand = gameDeck.splice(0, 5);
+            additionalGames.push({
+                deck: gameDeck,
+                hand: gameHand,
+                heldCards: heldCards.slice()
+            });
+        }
+        displayAdditionalGames();
+    }
+    
+    function updateDisplay() {
+        for (let i = 0; i < 5; i++) {
+            const card = playerHand[i];
+            const cardElement = cardElements[i];
+            cardElement.innerHTML = `
+                <span class="card-suit top-left">${card.suit}</span>
+                <span class="card-value">${card.value}</span>
+                <span class="card-suit bottom-right">${card.suit}</span>
+            `;
+            cardElement.classList.toggle('held', heldCards[i]);
+            cardElement.classList.remove('winning');
+            cardElement.classList.remove('red', 'black');
+            if (card.suit === '♥' || card.suit === '♦') {
+                cardElement.classList.add('red');
+            } else {
+                cardElement.classList.add('black');
+            }
+        }
+        bankrollElement.textContent = `Bankroll: $${bankroll}`;
+        setCookie('bankroll', bankroll, 1);
+    }
+    
+    function displayAdditionalGames() {
+        const additionalGamesContainer = document.getElementById('additional-games');
+        additionalGamesContainer.innerHTML = '';
+    
+        additionalGames.forEach((game, gameIndex) => {
+            const gameDiv = document.createElement('div');
+            gameDiv.classList.add('additional-game');
+    
+            const gameTitle = document.createElement('h3');
+            gameTitle.textContent = `Game ${gameIndex + 1}`;
+            gameDiv.appendChild(gameTitle);
+    
+            const cardsDiv = document.createElement('div');
+            cardsDiv.classList.add('cards');
+    
+            game.hand.forEach((card, cardIndex) => {
+                const cardElement = document.createElement('div');
+                cardElement.classList.add('card');
+    
+                cardElement.innerHTML = `
+                    <span class="card-suit top-left">${card.suit}</span>
+                    <span class="card-value">${card.value}</span>
+                    <span class="card-suit bottom-right">${card.suit}</span>
+                `;
+    
+                if (game.heldCards[cardIndex]) {
+                    cardElement.classList.add('held');
+                }
+    
+                cardElement.classList.remove('red', 'black');
+                if (card.suit === '♥' || card.suit === '♦') {
+                    cardElement.classList.add('red');
+                } else {
+                    cardElement.classList.add('black');
+                }
+    
+                cardsDiv.appendChild(cardElement);
+            });
+    
+            gameDiv.appendChild(cardsDiv);
+            additionalGamesContainer.appendChild(gameDiv);
+        });
+    }
+    
+    document.addEventListener('keydown', (e) => {
+        const key = e.key;
+        if (key >= '1' && key <= '5') {
+            const index = parseInt(key) - 1;
+            heldCards[index] = !heldCards[index];
+            updateDisplay();
+    
+            // Update held cards in additional games
+            additionalGames.forEach(game => {
+                game.heldCards = heldCards.slice();
+            });
+            displayAdditionalGames();
+        } else if (key === 'Enter') {
+            handleEnterKeyPress();
+        }
+    });
+    
+    function handleEnterKeyPress() {
+        if (gameState === 'deal') {
+            dealButton.click();
+        } else if (gameState === 'draw') {
+            drawButton.click();
+        }
+    }
+    
+    dealButton.addEventListener('click', () => {
+        dealCards();
+        dealButton.disabled = true;
+        drawButton.disabled = false;
+        gameState = 'draw';
+    });
+    
+    drawButton.addEventListener('click', () => {
+        // Main game draw
+        for (let i = 0; i < 5; i++) {
+            if (!heldCards[i]) {
+                playerHand[i] = deck.pop();
+                cardElements[i].classList.remove('replaced');
+                void cardElements[i].offsetWidth;
+                cardElements[i].classList.add('replaced');
+            }
+        }
+        updateDisplay();
+        drawButton.disabled = true;
+        evaluateHand();
+        gameState = 'deal';
+    
+        // Play out additional games
+        additionalGames.forEach((game, gameIndex) => {
+            // Replace unheld cards
+            for (let i = 0; i < 5; i++) {
+                if (!game.heldCards[i]) {
+                    game.hand[i] = game.deck.pop();
+                }
+            }
+    
+            // Evaluate the hand
+            const { handRank, winningIndices } = getHandRank(game.hand);
+            const payout = paytable[handRank] || 0;
+            bankroll += payout;
+    
+            // Update the display for this game
+            updateAdditionalGameDisplay(gameIndex, handRank, winningIndices);
+        });
+    
+        bankrollElement.textContent = `Bankroll: $${bankroll}`;
+        setCookie('bankroll', bankroll, 1);
+    });
+    
+    resetButton.addEventListener('click', () => {
+        bankroll = 100;
+        setCookie('bankroll', bankroll, 1);
+        dealButton.disabled = false;
+        drawButton.disabled = true;
+        bankrollElement.textContent = `Bankroll: $${bankroll}`;
+        cardElements.forEach(card => {
+            card.innerHTML = '?';
+            card.classList.remove('held', 'winning', 'replaced');
+        });
+        document.getElementById('additional-games').innerHTML = '';
+        gameState = 'deal';
+    });
+    
+    function evaluateHand() {
+        const { handRank, winningIndices } = getHandRank(playerHand);
+        const payout = paytable[handRank] || 0;
+        bankroll += payout;
+        updateResultsMessage(`Hand: ${handRank} | Payout: $${payout}`);
+        highlightWinningCards(winningIndices);
+    }
+    
+    function getHandRank(hand) {
+        // Existing logic for evaluating the hand
+        // ...
+    }
+    
+    function highlightWinningCards(indices) {
+        indices.forEach(index => {
+            cardElements[index].classList.add('winning');
+        });
+    }
+    
+    function updateAdditionalGameDisplay(gameIndex, handRank, winningIndices) {
+        const additionalGamesContainer = document.getElementById('additional-games');
+        const gameDiv = additionalGamesContainer.children[gameIndex];
+        const cardsDiv = gameDiv.querySelector('.cards');
+        const game = additionalGames[gameIndex];
+    
+        // Clear and rebuild the cards
+        cardsDiv.innerHTML = '';
+        game.hand.forEach((card, cardIndex) => {
+            const cardElement = document.createElement('div');
+            cardElement.classList.add('card');
+    
+            cardElement.innerHTML = `
+                <span class="card-suit top-left">${card.suit}</span>
+                <span class="card-value">${card.value}</span>
+                <span class="card-suit bottom-right">${card.suit}</span>
+            `;
+    
+            if (game.heldCards[cardIndex]) {
+                cardElement.classList.add('held');
+            }
+    
+            // Highlight winning cards
+            if (winningIndices.includes(cardIndex)) {
+                cardElement.classList.add('winning');
+            }
+    
+            // Apply red or black class
+            cardElement.classList.remove('red', 'black');
+            if (card.suit === '♥' || card.suit === '♦') {
+                cardElement.classList.add('red');
+            } else {
+                cardElement.classList.add('black');
+            }
+    
+            cardsDiv.appendChild(cardElement);
+        });
+    
+        // Display the result for this game
+        let resultDiv = gameDiv.querySelector('.result');
+        if (!resultDiv) {
+            resultDiv = document.createElement('div');
+            resultDiv.classList.add('result');
+            gameDiv.appendChild(resultDiv);
+        }
+        const payout = paytable[handRank] || 0;
+        resultDiv.textContent = `Hand: ${handRank} | Payout: $${payout}`;
+    }
+</script>    
+</body>
+</html>
