@@ -521,6 +521,8 @@
     
         bankrollElement.textContent = `Bankroll: $${bankroll}`;
         setCookie('bankroll', bankroll, 1);
+        // Reactivate the deal button
+        dealButton.disabled = false;
     });
     
     resetButton.addEventListener('click', () => {
