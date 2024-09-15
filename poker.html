@@ -29,13 +29,19 @@
             border: 3px solid #2ecc71;
         }
         .replaced {
-            animation: cardReplace 0.5s ease;
+            animation: cardReplace .5s ease;
         }
-        @keyframes cardReplace {
+        @keyframes cardReplaceBackup {
+            0% { transform: rotateY(0deg) perspective(600px); }
+            50% { transform: rotateY(90deg) perspective(600px) rotateX(10deg); }
+            100% { transform: rotateY(0deg) perspective(600px); }
+        }
+                @keyframes cardReplace {
             0% { transform: rotateY(0deg); }
             50% { transform: rotateY(90deg); }
             100% { transform: rotateY(0deg); }
         }
+
         #bankroll {
             font-size: 20px;
             margin: 20px 0;
@@ -140,7 +146,8 @@ function updateDisplay() {
         const card = playerHand[i];
         cardElements[i].textContent = `${card.value}${card.suit}`;
         cardElements[i].classList.toggle('held', heldCards[i]);
-        cardElements[i].classList.remove('winning', 'replaced');
+        //cardElements[i].classList.remove('winning', 'replaced');
+        cardElements[i].classList.remove('winning');
     }
     bankrollElement.textContent = `Bankroll: $${bankroll}`;
 }
@@ -177,6 +184,8 @@ drawButton.addEventListener('click', () => {
     for (let i = 0; i < 5; i++) {
         if (!heldCards[i]) {
             playerHand[i] = deck.pop();
+            cardElements[i].classList.remove('replaced'); // Remove and re-add to restart the animation
+            void cardElements[i].offsetWidth; // Trigger a reflow to restart the animation
             cardElements[i].classList.add('replaced');
         }
     }
