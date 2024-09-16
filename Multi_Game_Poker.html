@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Poker 1.9</title>
+    <title>Video Poker 1.2</title>
 <style>
     body {
         font-family: Arial, sans-serif;
@@ -351,6 +351,11 @@
     transform: translateY(1px);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
 }
+.bet-button:disabled {
+  background: #95a5a6;
+  color: #ecf0f1;
+  cursor: not-allowed;
+}
 
 /* Bet Amount Input Styling */
 #bet-amount-input {
@@ -471,7 +476,7 @@
 
 </head>
 <body>
-    <h1>Video Poker 1.9</h1>
+    <h1>Video Poker 1.2</h1>
     <div id="bankroll">Bankroll: $100</div>
     
     <div id="betAmount">
@@ -525,7 +530,7 @@
     let gameState = 'deal';
     let numAdditionalGames = parseInt(getCookie("numAdditionalGames")) || 0;  // Number of additional games
     let additionalGames = [];   // Array to store additional game objects
-    
+    let betButtonsDisabled = false;
 
     
     const resultMessage = document.getElementById('resultsMessage');
@@ -538,8 +543,15 @@
     const increaseMiniGames = document.getElementById('increase-mini-games');
     const decreaseMiniGames = document.getElementById('decrease-mini-games');
     const betAmountText = document.getElementById('bet-amount-text');
+    //const betAmountInput = document.getElementById('bet-amount-input');
+    
     const betAmountInput = document.getElementById('bet-amount-input');
     let betAmount = parseInt(betAmountInput.value);
+    const increaseBetButton = document.getElementById('increase-bet');
+    const decreaseBetButton = document.getElementById('decrease-bet');
+    const increaseMiniGamesButton = document.getElementById('increase-mini-games');
+    const decreaseMiniGamesButton = document.getElementById('decrease-mini-games');
+
     const paytable = {
         "Royal Flush": 250 * betAmount,
         "Straight Flush": 50 * betAmount,
@@ -553,6 +565,24 @@
         "No Win": -1 * betAmount
     };
     
+    function disableBettingOptions() {
+        console.log("Disabling betting options");
+        betAmountInput.disabled = true;
+        increaseBetButton.disabled = true;
+        decreaseBetButton.disabled = true;
+        increaseMiniGamesButton.disabled = true;
+        decreaseMiniGamesButton.disabled = true;
+        betButtonsDisabled = true;
+    }
+
+    function enableBettingOptions() {
+        betAmountInput.disabled = false;
+        increaseBetButton.disabled = false;
+        decreaseBetButton.disabled = false;
+        increaseMiniGamesButton.disabled = false;
+        decreaseMiniGamesButton.disabled = false;
+        betButtonsDisabled = false;
+    }
 
     // Add event listener to increase mini-game count
     increaseMiniGames.addEventListener('click', () => {
@@ -571,21 +601,26 @@
     });
     
     document.getElementById('increase-bet').addEventListener('click', function() {
+      if (!betButtonsDisabled) {
         let betAmountInput = document.getElementById('bet-amount-input');
-        betAmountInput.value = parseInt(betAmountInput.value) + 1;
-        betAmount = parseInt(betAmountInput.value);
-        updateBetAmountText()
-        updatePaytable();
+          betAmountInput.value = parseInt(betAmountInput.value) + 1;
+          betAmount = parseInt(betAmountInput.value);
+          updateBetAmountText()
+          updatePaytable();
+      }
+
     });
 
     document.getElementById('decrease-bet').addEventListener('click', function() {
+      if (!betButtonsDisabled) {
         let betAmountInput = document.getElementById('bet-amount-input');
-        if (betAmountInput.value > 1) { // Ensure the bet doesn't go below 1
-            betAmountInput.value = parseInt(betAmountInput.value) - 1;
-            betAmount = parseInt(betAmountInput.value);
-            updateBetAmountText()
-            updatePaytable();
-        }
+          if (betAmountInput.value > 1) { // Ensure the bet doesn't go below 1
+              betAmountInput.value = parseInt(betAmountInput.value) - 1;
+              betAmount = parseInt(betAmountInput.value);
+              updateBetAmountText()
+              updatePaytable();
+          }
+      }
     });
 
 
@@ -643,16 +678,16 @@
         });
     
         // Add touch event for mobile devices
-        // card.addEventListener('touchstart', () => {
-            // heldCards[index] = !heldCards[index];
-            // updateDisplay();
+        card.addEventListener('touchstart', () => {
+            heldCards[index] = !heldCards[index];
+            updateDisplay();
     
             // Update held cards in additional games
-            // additionalGames.forEach(game => {
-                // game.heldCards = heldCards.slice();
-            // });
-            // displayAdditionalGames();
-        // });
+            additionalGames.forEach(game => {
+                game.heldCards = heldCards.slice();
+            });
+            displayAdditionalGames();
+        });
     });
     
     function setCookie(name, value, days){
@@ -710,7 +745,7 @@
         heldCards = [false, false, false, false, false];
         updateDisplay();
         gameState = 'draw';
-
+        disableBettingOptions();
         // Initialize additional games with empty hands
         additionalGames = [];
         for (let i = 0; i < numAdditionalGames; i++) {
@@ -759,66 +794,66 @@
         }
 
 
-        function displayAdditionalGames() {
-            const additionalGamesContainer = document.getElementById('additional-games');
-            additionalGamesContainer.innerHTML = '';
+    function displayAdditionalGames() {
+        const additionalGamesContainer = document.getElementById('additional-games');
+        additionalGamesContainer.innerHTML = '';
 
-            additionalGames.forEach((game, gameIndex) => {
-                const gameDiv = document.createElement('div');
-                gameDiv.classList.add('additional-game');
+        additionalGames.forEach((game, gameIndex) => {
+            const gameDiv = document.createElement('div');
+            gameDiv.classList.add('additional-game');
 
-                const gameTitle = document.createElement('h3');
-                gameTitle.textContent = `Game ${gameIndex + 1}`;
-                gameDiv.appendChild(gameTitle);
+            const gameTitle = document.createElement('h3');
+            gameTitle.textContent = `Game ${gameIndex + 1}`;
+            gameDiv.appendChild(gameTitle);
 
-                const cardsDiv = document.createElement('div');
-                cardsDiv.classList.add('cards');
+            const cardsDiv = document.createElement('div');
+            cardsDiv.classList.add('cards');
 
-                game.hand.forEach((card, cardIndex) => {
-                    const cardElement = document.createElement('div');
-                    cardElement.classList.add('card');
+            game.hand.forEach((card, cardIndex) => {
+                const cardElement = document.createElement('div');
+                cardElement.classList.add('card');
 
-                    if (heldCards[cardIndex]) {
-                        const heldCard = playerHand[cardIndex];
-                        cardElement.innerHTML = `
-                            <span class="card-suit top-left">${heldCard.suit}</span>
-                            <span class="card-value">${heldCard.value}</span>
-                            <span class="card-suit bottom-right">${heldCard.suit}</span>
-                        `;
-                        cardElement.classList.add('held');
+                if (heldCards[cardIndex]) {
+                    const heldCard = playerHand[cardIndex];
+                    cardElement.innerHTML = `
+                        <span class="card-suit top-left">${heldCard.suit}</span>
+                        <span class="card-value">${heldCard.value}</span>
+                        <span class="card-suit bottom-right">${heldCard.suit}</span>
+                    `;
+                    cardElement.classList.add('held');
 
-                        // Apply correct color class
-                        cardElement.classList.remove('red', 'black');
-                        if (heldCard.suit === '♥' || heldCard.suit === '♦') {
-                            cardElement.classList.add('red');
-                        } else {
-                            cardElement.classList.add('black');
-                        }
-                    } else if (!card.value || !card.suit) {
-                        cardElement.innerHTML = `?`;
+                    // Apply correct color class
+                    cardElement.classList.remove('red', 'black');
+                    if (heldCard.suit === '♥' || heldCard.suit === '♦') {
+                        cardElement.classList.add('red');
                     } else {
-                        cardElement.innerHTML = `
-                            <span class="card-suit top-left">${card.suit}</span>
-                            <span class="card-value">${card.value}</span>
-                            <span class="card-suit bottom-right">${card.suit}</span>
-                        `;
-
-                        // Apply correct color class for non-held cards
-                        cardElement.classList.remove('red', 'black');
-                        if (card.suit === '♥' || card.suit === '♦') {
-                            cardElement.classList.add('red');
-                        } else {
-                            cardElement.classList.add('black');
-                        }
+                        cardElement.classList.add('black');
                     }
+                } else if (!card.value || !card.suit) {
+                    cardElement.innerHTML = `?`;
+                } else {
+                    cardElement.innerHTML = `
+                        <span class="card-suit top-left">${card.suit}</span>
+                        <span class="card-value">${card.value}</span>
+                        <span class="card-suit bottom-right">${card.suit}</span>
+                    `;
 
-                    cardsDiv.appendChild(cardElement);
-                });
+                    // Apply correct color class for non-held cards
+                    cardElement.classList.remove('red', 'black');
+                    if (card.suit === '♥' || card.suit === '♦') {
+                        cardElement.classList.add('red');
+                    } else {
+                        cardElement.classList.add('black');
+                    }
+                }
 
-                gameDiv.appendChild(cardsDiv);
-                additionalGamesContainer.appendChild(gameDiv);
+                cardsDiv.appendChild(cardElement);
             });
-        }
+
+            gameDiv.appendChild(cardsDiv);
+            additionalGamesContainer.appendChild(gameDiv);
+        });
+    }
 
 
     document.addEventListener('keydown', (e) => {
@@ -906,6 +941,7 @@
         updateDisplay();
         drawButton.disabled = true;
         evaluateHand();
+        enableBettingOptions();
         gameState = 'deal';
 
         // Now populate the mini-games' hands and play them out
@@ -938,6 +974,11 @@
     
     resetButton.addEventListener('click', () => {
         bankroll = 100;
+        betAmount = 5;
+        betAmountInput.value = betAmount;
+        numAdditionalGames = 0;
+        updateBetAmountText();
+        miniGameCountDisplay.textContent = numAdditionalGames;
         setCookie('bankroll', bankroll, 1);
         dealButton.disabled = false;
         drawButton.disabled = true;
