@@ -643,15 +643,15 @@
         });
     
         // Add touch event for mobile devices
-        card.addEventListener('touchstart', () => {
-            heldCards[index] = !heldCards[index];
-            updateDisplay();
+        // card.addEventListener('touchstart', () => {
+            // heldCards[index] = !heldCards[index];
+            // updateDisplay();
     
             // Update held cards in additional games
-            additionalGames.forEach(game => {
-                game.heldCards = heldCards.slice();
-            });
-            displayAdditionalGames();
+            // additionalGames.forEach(game => {
+                // game.heldCards = heldCards.slice();
+            // });
+            // displayAdditionalGames();
         });
     });
     
