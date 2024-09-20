@@ -665,31 +665,44 @@
         paytable["No Win"] = -1 * betAmount;
     }
     
-    cardElements.forEach((card, index) => {
-        card.addEventListener('click', () => {
-            heldCards[index] = !heldCards[index];
-            updateDisplay();
+//    cardElements.forEach((card, index) => {
+//        card.addEventListener('click', () => {
+//            heldCards[index] = !heldCards[index];
+//            updateDisplay();
     
              //Update held cards in additional games
-            additionalGames.forEach(game => {
-                game.heldCards = heldCards.slice();
-            });
-            displayAdditionalGames();
-        });
-    
+//            additionalGames.forEach(game => {
+//                game.heldCards = heldCards.slice();
+//            });
+//            displayAdditionalGames();
+//        });
+//    
         // Add touch event for mobile devices
-        card.addEventListener('touchstart', () => {
+//        card.addEventListener('touchstart', () => {
+//            heldCards[index] = !heldCards[index];
+//            updateDisplay();
+//    
+//            // Update held cards in additional games
+//            additionalGames.forEach(game => {
+//                game.heldCards = heldCards.slice();
+//            });
+//            displayAdditionalGames();
+//        });
+//    });
+    
+    cardElements.forEach((card, index) => {
+        card.addEventListener('pointerdown', () => {
             heldCards[index] = !heldCards[index];
             updateDisplay();
-    
             // Update held cards in additional games
             additionalGames.forEach(game => {
                 game.heldCards = heldCards.slice();
             });
             displayAdditionalGames();
-        });
-    });
-    
+        })
+    })
+
+
     function setCookie(name, value, days){
         let expires = "";
         if (days) {
