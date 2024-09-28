@@ -324,6 +324,8 @@
        updateUI();
        hitBot();
        standBot();
+       let currentBet = botBet;
+
        botBet = 25; // Reset bet amount after doubleing down
        updateUI();
       }
@@ -436,59 +438,61 @@
         return hand.some(card => card.value === 'A') && getHandValue(hand) <= 21;
       }
 
-      function checkGameOver() {
-        const botValue = getHandValue(botHand);
-        const dealerValue = getHandValue(dealerHand);
-        const botBlackjack = (botValue === 21 && botHand.length === 2);
-        const dealerBlackjack = (dealerValue === 21 && dealerHand.length === 2);
+function checkGameOver() {
+    const botValue = getHandValue(botHand);
+    const dealerValue = getHandValue(dealerHand);
+    const botBlackjack = (botValue === 21 && botHand.length === 2);
+    const dealerBlackjack = (dealerValue === 21 && dealerHand.length === 2);
 
-        let outcome = "";
-        let winAmount = 0;
+    let outcome = "";
+    let winAmount = 0;
+    let currentBet = botBet; // Store current bet before resetting
 
-        if (botBlackjack && !dealerBlackjack) {
-            botBalance += botBet * 1.5;
-            outcome = "Bot has Blackjack! Bot wins!";
-            winAmount = botBet * 1.5;
-            wins++;
-        } else if (dealerBlackjack && !botBlackjack) {
-            botBalance -= botBet;
-            outcome = "Dealer has Blackjack! Bot loses.";
-            winAmount = -botBet;
-            losses++;
-        } else if (botValue > 21) {
-            botBalance -= botBet;
-            outcome = "Bot busts! Bot loses.";
-            winAmount = -botBet;
-            losses++;
-        } else if (dealerValue > 21) {
-            botBalance += botBet;
-            outcome = "Dealer busts! Bot wins!";
-            winAmount = botBet;
-            wins++;
-        } else if (botValue > dealerValue) {
-            botBalance += botBet;
-            outcome = "Bot wins!";
-            winAmount = botBet;
-            wins++;
-        } else if (botValue < dealerValue) {
-            botBalance -= botBet;
-            outcome = "Bot loses.";
-            winAmount = -botBet;
-            losses++;
-        } else {
-            outcome = "Push! It's a tie.";
-        }
-
-        document.getElementById('message').innerText = outcome;
-        document.getElementById('botBalance').innerText = botBalance;
-        botBet = 25; // Reset bet to default
-        updateUI();
-        gameActive = false;
-        updateStats();
-
-        // Add history entry
-        addHistory(botHand, dealerHand, outcome, botBet, winAmount);
+    if (botBlackjack && !dealerBlackjack) {
+        botBalance += botBet * 1.5;
+        outcome = "Bot has Blackjack! Bot wins!";
+        winAmount = botBet * 1.5;
+        wins++;
+    } else if (dealerBlackjack && !botBlackjack) {
+        botBalance -= botBet;
+        outcome = "Dealer has Blackjack! Bot loses.";
+        winAmount = -botBet;
+        losses++;
+    } else if (botValue > 21) {
+        botBalance -= botBet;
+        outcome = "Bot busts! Bot loses.";
+        winAmount = -botBet;
+        losses++;
+    } else if (dealerValue > 21) {
+        botBalance += botBet;
+        outcome = "Dealer busts! Bot wins!";
+        winAmount = botBet;
+        wins++;
+    } else if (botValue > dealerValue) {
+        botBalance += botBet;
+        outcome = "Bot wins!";
+        winAmount = botBet;
+        wins++;
+    } else if (botValue < dealerValue) {
+        botBalance -= botBet;
+        outcome = "Bot loses.";
+        winAmount = -botBet;
+        losses++;
+    } else {
+        outcome = "Push! It's a tie.";
     }
+
+    document.getElementById('message').innerText = outcome;
+    document.getElementById('botBalance').innerText = botBalance;
+    botBet = 25; // Reset bet to default
+    updateUI();
+    gameActive = false;
+    updateStats();
+
+    // Add history entry using currentBet
+    addHistory(botHand, dealerHand, outcome, currentBet, winAmount);
+}
+
 
     function addHistory(playerCards, dealerCards, outcome, betAmount, winAmount) {
       const historyTableBody = document.getElementById('historyTable').querySelector('tbody');
