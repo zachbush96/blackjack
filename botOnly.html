@@ -156,13 +156,15 @@
 
       function startGame() {
         if (gameActive) return;
-        if (deck.length === 0 || cardsUsed / (52 * numDecks) >= shuffleThreshold) {
-          deck = createDeck();
+        if (deck.length === 0 || (deck.length / (52 * numDecks)) <= (1 - shuffleThreshold)) {
+          deck = createDeck(numDecks);
           shuffleDeck(deck);
           cardsUsed = 0;
           runningCount = 0;
           trueCount = 0;
           updateRunningCountDisplay();
+          shuffleCount++;
+          updateShuffleCounterDisplay();
         }
         adjustBetSize();
         botHand = [drawCard(), drawCard()];
@@ -358,18 +360,20 @@
       }
 
       function drawCard() {
-        if (deck.length === 0 || cardsUsed / (52 * numDecks) >= shuffleThreshold) { // Directly use 52 * numDecks
-          deck = createDeck(numDecks); // Pass numDecks to createDeck
+        if (deck.length === 0) {
+          // This shouldn't happen if startGame() is working correctly, but just in case:
+          deck = createDeck(numDecks);
           shuffleDeck(deck);
           cardsUsed = 0;
           runningCount = 0;
           updateRunningCountDisplay();
         }
-        cardsUsed++;
         const card = deck.pop();
+        cardsUsed++;
         updateRunningCount(card);
         return card;
       }
+
 
       function updateRunningCount(card) {
         if (['10', 'J', 'Q', 'K', 'A'].includes(card.value)) {
