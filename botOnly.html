@@ -107,6 +107,7 @@
         <tr>
           <th>Player's Cards</th>
           <th>Dealer's Cards</th>
+          <th>True Count</th>
           <th>Outcome</th>
           <th>Bet Amount</th>
           <th>Win Amount</th>
@@ -490,11 +491,11 @@ function checkGameOver() {
     updateStats();
 
     // Add history entry using currentBet
-    addHistory(botHand, dealerHand, outcome, currentBet, winAmount);
+    addHistory(botHand, dealerHand, outcome, currentBet, winAmount, trueCount);
 }
 
 
-    function addHistory(playerCards, dealerCards, outcome, betAmount, winAmount) {
+    function addHistory(playerCards, dealerCards, outcome, betAmount, winAmount, trueCount) {
       const historyTableBody = document.getElementById('historyTable').querySelector('tbody');
       const newRow = document.createElement('tr');
 
@@ -513,8 +514,12 @@ function checkGameOver() {
       const winAmountCell = document.createElement('td');
       winAmountCell.textContent = `$${winAmount}`;
 
+      const trueCountCell = document.createElement('td')
+      trueCountCell.textContent = `${trueCount}`;
+
       newRow.appendChild(playerCardsCell);
       newRow.appendChild(dealerCardsCell);
+      newRow.appendChild(trueCountCell)
       newRow.appendChild(outcomeCell);
       newRow.appendChild(betAmountCell);
       newRow.appendChild(winAmountCell);
