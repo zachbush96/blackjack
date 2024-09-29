@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebGPU Memory and GPU Experiment</title>
+</head>
+<body>
+    <script>
+        // Global buffer array to keep them alive and prevent them from being garbage collected
+        const bufferArray = [];
+
+        // Helper function to create buffers in chunks to bypass WebGPU buffer size limit
+        function createChunkedBuffers(device, totalSize, chunkSize) {
+            const numChunks = Math.ceil(totalSize / chunkSize);
+            
+            for (let i = 0; i < numChunks; i++) {
+                const currentSize = Math.min(chunkSize, totalSize - i * chunkSize);
+                
+                try {
+                    const buffer = device.createBuffer({
+                        size: currentSize,
+                        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+                    });
+                    bufferArray.push(buffer); // Store buffer in global array
+                    console.log(`Buffer chunk ${i} created with size ${currentSize} bytes.`);
+                } catch (e) {
+                    console.error(`Error creating buffer chunk ${i}:`, e);
+                    alert("Memory error occurred: " + e.message);
+                }
+            }
+        }
+
+        async function startExperiment() {
+            if (!navigator.gpu) {
+                alert("WebGPU is not supported on this browser.");
+                return;
+            }
+
+            // Get GPU device and context
+            const adapter = await navigator.gpu.requestAdapter();
+            const device = await adapter.requestDevice();
+
+            // Constants
+            const maxBufferSize = 256 * 1024 * 1024; // 256MB, WebGPU limit
+            const bufferSize = 165 * 1024 * 1024; // 165MB
+            const bufferCount = 100;
+            const computeIntensity = 75;
+
+            // Initialize Buffers by splitting them into chunks and keeping them in bufferArray
+            for (let i = 0; i < bufferCount; i++) {
+                createChunkedBuffers(device, bufferSize, maxBufferSize);
+            }
+
+            // Simulate a compute workload
+            try {
+                const shaderModule = device.createShaderModule({
+                    code: `
+                    @compute @workgroup_size(${computeIntensity}) fn main() {
+                        // Heavy compute shader code to mess with the GPU
+                        var index: u32 = 0;
+                        for (var i: u32 = 0; i < 1000000; i++) {
+                            index = (index + i) % 65536;
+                        }
+                    }
+                    `
+                });
+
+                const pipeline = device.createComputePipeline({
+                    layout: "auto",
+                    compute: {
+                        module: shaderModule,
+                        entryPoint: "main"
+                    }
+                });
+
+                const commandEncoder = device.createCommandEncoder();
+                const passEncoder = commandEncoder.beginComputePass();
+                passEncoder.setPipeline(pipeline);
+                passEncoder.dispatchWorkgroups(1);
+                passEncoder.end();
+
+                device.queue.submit([commandEncoder.finish()]);
+                console.log("Compute workload dispatched.");
+            } catch (e) {
+                console.error("Error running compute workload:", e);
+                alert("GPU error occurred: " + e.message);
+            }
+        }
+
+        // Start the experiment automatically on page load
+        window.onload = function () {
+            startExperiment();
+        }
+    </script>
+</body>
+</html>
