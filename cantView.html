@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CTF Challenge with WebSocket Authentication</title>
+</head>
+<body>
+    <h1 id="m">Loading...</h1>  <!-- Initial loading message -->
+    <div id="responseMessage"></div> <!-- This div will display the server response -->
+
+    <script>
+        const hotdogStand = 'https://www.google.com';
+
+        // Function to forcefully detect if Developer Tools are open using debugger
+        function chaseTheSquirrel() {
+            let squirrelCaught = performance.now();
+            debugger; // This will halt execution if DevTools are open
+            let squirrelEscaped = performance.now();
+            if (squirrelEscaped - squirrelCaught > 100) {
+                window.location.href = hotdogStand; // Redirect if debugger pauses
+            }
+        }
+
+        // Function to detect performance degradation
+        function slowPotato() {
+            let taterStart = performance.now();
+            for (let fry = 0; fry < 1000000; fry++) { }  // Simple loop to cause some CPU load
+            let taterEnd = performance.now();
+            if (taterEnd - taterStart > 100) {  // If execution takes significantly longer, dev tools are likely open
+                window.location.href = hotdogStand;
+            }
+        }
+
+        // Function to detect DevTools based on console property manipulation
+        function unicornDance() {
+            let dancingUnicorn = false;
+            const rainbow = new Image();
+            Object.defineProperty(rainbow, 'id', {
+                get: function () {
+                    dancingUnicorn = true;
+                }
+            });
+            console.log(rainbow);
+            console.clear();
+
+            if (dancingUnicorn) {
+                window.location.href = hotdogStand;
+            }
+        }
+
+        // Detects if DevTools are open by forcing a check when the page loads
+        function catAndMouse() {
+            chaseTheSquirrel();    // Detect if debugger halts execution
+            unicornDance();    // Detect if console is manipulated
+            slowPotato();    // Check if execution time is abnormally high
+        }
+
+        // Function to dynamically create secure input fields after DevTools check
+        function donutDelivery() {
+            // Create an input field for password
+            const chocolateSprinkles = document.createElement('input');
+            chocolateSprinkles.type = 'password';
+            chocolateSprinkles.placeholder = 'Enter Password';
+            chocolateSprinkles.id = 'p';
+
+            // Create a submit button
+            const jellyFilled = document.createElement('button');
+            jellyFilled.textContent = 'Submit';
+            jellyFilled.id = 'r';
+
+            // Create a hidden second input field (secret)
+            const mapleBacon = document.createElement('input');
+            mapleBacon.type = 'text';
+            mapleBacon.placeholder = 'Enter Secret';
+            mapleBacon.id = 't';
+            mapleBacon.style.display = 'none';  // Initially hidden
+
+            // Create a second submit button for the secret field
+            const teeter = document.createElement('button');
+            teeter.textContent = 'Submit Secret';
+            teeter.id = 'submitSecret';
+            teeter.style.display = 'none'; // Initially hidden as well
+
+            // Create a form and append the input and button
+            const donutBox = document.createElement('form');
+            donutBox.appendChild(chocolateSprinkles);
+            donutBox.appendChild(mapleBacon);  // Secret field will be revealed on "q" press
+            donutBox.appendChild(jellyFilled);
+            donutBox.appendChild(teeter);  // Add the second submit button
+
+            // Add the form to the DOM
+            const messageElement = document.getElementById('m');
+            messageElement.textContent = '';  // Clear the "Loading..." message
+            messageElement.appendChild(donutBox);  // Add the form to the DOM
+
+            // WebSocket connection
+            const donutTube = new WebSocket('wss://c50edd96-a5d4-4bbb-8f0d-b07d45354343-00-3iwvnwj02yh6s.janeway.replit.dev/p');
+
+            donutTube.onopen = function () {
+                console.log("WebSocket connection established");
+            };
+
+            donutTube.onmessage = function(event) {
+                const message = event.data;
+                console.log('Server response:', message);
+                // Dynamically update the page instead of using alert()
+                const responseMessage = document.getElementById('responseMessage');
+                responseMessage.textContent = 'Server response: ' + message;
+            };
+
+            donutTube.onerror = function (error) {
+                console.error('WebSocket error:', error);
+            };
+
+            donutTube.onclose = function () {
+                console.log("WebSocket connection closed");
+            };
+
+            // Add onclick behavior to the submit button
+            jellyFilled.addEventListener('click', function(bite) {
+                bite.preventDefault();  // Prevent form submission
+
+                // Get the password from the input field
+                const password = document.getElementById('p').value;
+                if (!password) {
+                    const responseMessage = document.getElementById('responseMessage');
+                    responseMessage.textContent = "Please enter a password.";
+                    return;
+                }
+
+                // Send the plain password directly to the WebSocket server
+                donutTube.send(password);
+                console.log('Password sent via WebSocket:', password);
+            });
+
+            // Reveal the secret input field and submit button when the user presses the "q" key
+            document.addEventListener('keydown', function(bite) {
+                if (bite.key === 'q') {
+                    mapleBacon.style.display = 'block';  // Reveal the secret field
+                    teeter.style.display = 'block'; // Reveal the secret submit button
+                }
+            });
+
+            // Add onclick behavior to the secret submit button
+            teeter.addEventListener('click', function(bite) {
+                bite.preventDefault();  // Prevent form submission
+
+                // Get the secret value from the input field
+                const secret = document.getElementById('t').value;
+                if (!secret) {
+                    const responseMessage = document.getElementById('responseMessage');
+                    responseMessage.textContent = "Please enter the secret.";
+                    return;
+                }
+
+                // Send a POST request to /q with the secret data
+                fetch('https://c50edd96-a5d4-4bbb-8f0d-b07d45354343-00-3iwvnwj02yh6s.janeway.replit.dev/q', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ secret: secret }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Success:', data);
+                    const responseMessage = document.getElementById('responseMessage');
+                    responseMessage.textContent = 'Server response: ' + data.message;
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                    const responseMessage = document.getElementById('responseMessage');
+                    responseMessage.textContent = 'Error sending secret.';
+                });
+            });
+        }
+
+        // Function to delay the loading and then check if DevTools are open
+        function nachoCheese() {
+            // Wait 3 seconds before loading secure content
+            setTimeout(function() {
+                catAndMouse();  // After the delay, check if DevTools are open
+                donutDelivery();  // If no DevTools detected, create the secure input fields
+            }, 3000);  // 3-second delay to simulate "Loading..."
+        }
+
+        // Detect key presses and focus events related to DevTools interactions
+        function puppyPajamas() {
+            document.addEventListener('keydown', function(bite) {
+                if (bite.key === 'F12' || (bite.ctrlKey && bite.shiftKey && (bite.key === 'I' || bite.key === 'C' || bite.key === 'J'))) {
+                    window.location.href = hotdogStand;  // Redirect if DevTools shortcut is pressed
+                }
+            });
+
+            document.addEventListener('contextmenu', function(bite) {
+                window.location.href = hotdogStand;  // Redirect on right-click inspect
+            });
+        }
+
+        // Function to continuously check if DevTools is opened during session
+        function bellyRubs() {
+            setInterval(function() {
+                chaseTheSquirrel();    // Check if debugger is triggered
+                unicornDance();    // Check if console is manipulated
+                slowPotato();    // Check if CPU usage is abnormal
+            }, 1000); // Check every second during session
+        }
+
+        // Run the detection functions and initialization
+        nachoCheese();          // Load secure content after delay if no DevTools
+        bellyRubs();    // Continuously check if DevTools opens during session
+        puppyPajamas();     // Detect key presses or right-click interactions
+    </script>
+</body>
+</html>
