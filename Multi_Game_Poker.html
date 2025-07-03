@@ -585,8 +585,16 @@
     }
 
     // Add event listener to increase mini-game count
+    function totalBetFor(games, bet) {
+        return bet * (games + 1);
+    }
+
+    function canAfford(games, bet) {
+        return totalBetFor(games, bet) <= bankroll;
+    }
+
     increaseMiniGames.addEventListener('click', () => {
-        if (numAdditionalGames < 5) {
+        if (numAdditionalGames < 5 && canAfford(numAdditionalGames + 1, betAmount)) {
             numAdditionalGames++;
             miniGameCountDisplay.textContent = numAdditionalGames;
             updateBetAmountText();
@@ -603,27 +611,33 @@
     });
     
     document.getElementById('increase-bet').addEventListener('click', function() {
-      if (!betButtonsDisabled) {
-        let betAmountInput = document.getElementById('bet-amount-input');
-          betAmountInput.value = parseInt(betAmountInput.value) + 1;
-          betAmount = parseInt(betAmountInput.value);
-          updateBetAmountText()
-          updatePaytable();
-      }
+        if (!betButtonsDisabled) {
+          let betAmountInput = document.getElementById('bet-amount-input');
+            const newBet = parseInt(betAmountInput.value) + 1;
+            if (canAfford(numAdditionalGames, newBet)) {
+                betAmountInput.value = newBet;
+                betAmount = newBet;
+                updateBetAmountText();
+                updatePaytable();
+            }
+        }
 
     });
 
     document.getElementById('decrease-bet').addEventListener('click', function() {
-      if (!betButtonsDisabled) {
-        let betAmountInput = document.getElementById('bet-amount-input');
-          if (betAmountInput.value > 1) { // Ensure the bet doesn't go below 1
-              betAmountInput.value = parseInt(betAmountInput.value) - 1;
-              betAmount = parseInt(betAmountInput.value);
-              updateBetAmountText()
-              updatePaytable();
-          }
-      }
-    });
+        if (!betButtonsDisabled) {
+          let betAmountInput = document.getElementById('bet-amount-input');
+            if (betAmountInput.value > 1) { // Ensure the bet doesn't go below 1
+                const newBet = parseInt(betAmountInput.value) - 1;
+                if (canAfford(numAdditionalGames, newBet)) {
+                    betAmountInput.value = newBet;
+                    betAmount = newBet;
+                    updateBetAmountText();
+                    updatePaytable();
+                }
+            }
+        }
+      });
 
 
     function updateBetAmountText() {
@@ -643,9 +657,14 @@
 
     // Add event listener for bet amount input
     betAmountInput.addEventListener('input', () => {
-        betAmount = parseInt(betAmountInput.value);
-        updateBetAmountText()
-        updatePaytable();
+        const newBet = parseInt(betAmountInput.value);
+        if (canAfford(numAdditionalGames, newBet) && newBet >= 1) {
+            betAmount = newBet;
+            updateBetAmountText();
+            updatePaytable();
+        } else {
+            betAmountInput.value = betAmount;
+        }
     });
     
     
@@ -909,10 +928,13 @@
             //updateBetAmountText()
             //updatePaytable();
             let betAmountInput = document.getElementById('bet-amount-input');
-            betAmountInput.value = parseInt(betAmountInput.value) + 1;
-            betAmount = parseInt(betAmountInput.value);
-            updateBetAmountText()
-            updatePaytable();
+            const newBet = parseInt(betAmountInput.value) + 1;
+            if (canAfford(numAdditionalGames, newBet)) {
+                betAmountInput.value = newBet;
+                betAmount = newBet;
+                updateBetAmountText();
+                updatePaytable();
+            }
         }
         // if key is '-' then decrease the bet amount
         else if (key === '-') {
@@ -922,10 +944,13 @@
             //updatePaytable();
             let betAmountInput = document.getElementById('bet-amount-input');
             if (betAmountInput.value > 1) { // Ensure the bet doesn't go below 1
-                betAmountInput.value = parseInt(betAmountInput.value) - 1;
-                betAmount = parseInt(betAmountInput.value);
-                updateBetAmountText()
-                updatePaytable();
+                const newBet = parseInt(betAmountInput.value) - 1;
+                if (canAfford(numAdditionalGames, newBet)) {
+                    betAmountInput.value = newBet;
+                    betAmount = newBet;
+                    updateBetAmountText();
+                    updatePaytable();
+                }
             }
         }
     });
@@ -939,6 +964,10 @@
     }
     
     dealButton.addEventListener('click', () => {
+        if (!canAfford(numAdditionalGames, betAmount)) {
+            alert('Insufficient bankroll for this bet');
+            return;
+        }
         dealCards();
         dealButton.disabled = true;
         drawButton.disabled = false;
