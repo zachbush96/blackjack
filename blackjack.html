@@ -46,6 +46,60 @@
       .status p {
         margin: 10px 0;
       }
+
+      .hand {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+
+      .card {
+        position: relative;
+        width: 60px;
+        height: 90px;
+        border: 2px solid #ecf0f1;
+        border-radius: 8px;
+        background-color: #ffffff;
+        color: black;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+      }
+
+      .card .card-value {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 1.2rem;
+      }
+
+      .card .card-suit {
+        position: absolute;
+        font-size: 0.9rem;
+      }
+
+      .card .top-left {
+        top: 4px;
+        left: 4px;
+      }
+
+      .card .bottom-right {
+        bottom: 4px;
+        right: 4px;
+      }
+
+      .card.red {
+        color: red;
+      }
+
+      .card.back {
+        background-color: #37474f;
+        color: #ffffff;
+        font-size: 2rem;
+      }
     </style>
   </head>
   <body>
@@ -71,9 +125,18 @@
       </div>
 
       <div class="status">
-        <p id="dealerHand">Dealer: []</p>
-        <p id="playerHand">Player: []</p>
-        <p id="playerHand2"></p>
+        <div>
+          <p>Dealer:</p>
+          <div id="dealerHand" class="hand"></div>
+        </div>
+        <div>
+          <p>Player Hand 1:</p>
+          <div id="playerHand" class="hand"></div>
+        </div>
+        <div id="playerHand2Container" style="display: none;">
+          <p>Player Hand 2:</p>
+          <div id="playerHand2" class="hand"></div>
+        </div>
         <p id="message"></p>
       </div>
     </div>
@@ -348,18 +411,42 @@
         updateUI();
       }
 
+      function createCardElement(card) {
+        const div = document.createElement('div');
+        const isRed = card.suit === '♥' || card.suit === '♦';
+        div.className = 'card ' + (isRed ? 'red' : '');
+        div.innerHTML = `
+          <span class="card-suit top-left">${card.suit}</span>
+          <span class="card-value">${card.value}</span>
+          <span class="card-suit bottom-right">${card.suit}</span>
+        `;
+        return div;
+      }
+
+      function renderHand(hand, elementId, hideSecond = false) {
+        const container = document.getElementById(elementId);
+        container.innerHTML = '';
+        hand.forEach((card, index) => {
+          if (hideSecond && index === 1) {
+            const back = document.createElement('div');
+            back.className = 'card back';
+            back.textContent = '?';
+            container.appendChild(back);
+          } else {
+            container.appendChild(createCardElement(card));
+          }
+        });
+      }
+
       function updateUI() {
-        document.getElementById('playerHand').innerText = `Player Hand 1: ${playerHand
-          .map(card => `${card.value}${card.suit}`)
-          .join(', ')}`;
-        // Removed botHand display
+        renderHand(playerHand, 'playerHand');
 
         if (splitActive) {
-          document.getElementById('playerHand2').innerText = `Player Hand 2: ${playerHand2
-            .map(card => `${card.value}${card.suit}`)
-            .join(', ')}`;
+          document.getElementById('playerHand2Container').style.display = 'block';
+          renderHand(playerHand2, 'playerHand2');
         } else {
-          document.getElementById('playerHand2').innerText = '';
+          document.getElementById('playerHand2Container').style.display = 'none';
+          document.getElementById('playerHand2').innerHTML = '';
         }
 
         // Disable double down if conditions are not met
@@ -379,13 +466,7 @@
           splitActive ||
           balance < bet;
 
-        if (gameActive) {
-          document.getElementById('dealerHand').innerText = `Dealer: ${dealerHand[0].value}${dealerHand[0].suit}, [Hidden]`;
-        } else {
-          document.getElementById('dealerHand').innerText = `Dealer: ${dealerHand
-            .map(card => `${card.value}${card.suit}`)
-            .join(', ')}`;
-        }
+        renderHand(dealerHand, 'dealerHand', gameActive);
       }
     </script>
   </body>
