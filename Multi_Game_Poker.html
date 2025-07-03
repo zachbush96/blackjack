@@ -586,9 +586,11 @@
 
     // Add event listener to increase mini-game count
     increaseMiniGames.addEventListener('click', () => {
-        numAdditionalGames++;
-        miniGameCountDisplay.textContent = numAdditionalGames;
-        updateBetAmountText()
+        if (numAdditionalGames < 5) {
+            numAdditionalGames++;
+            miniGameCountDisplay.textContent = numAdditionalGames;
+            updateBetAmountText();
+        }
     });
 
     // Add event listener to decrease mini-game count
@@ -646,11 +648,6 @@
         updatePaytable();
     });
     
-    // Add event listener for mini-game count input
-    miniGameCountDisplay.addEventListener('input', () => {
-        numAdditionalGames = parseInt(miniGameCountDisplay.value);
-        
-    });
     
     function updatePaytable() {
         paytable["Royal Flush"] = 250 * betAmount;
@@ -798,6 +795,13 @@
     function isSequential(values) {
             const valueOrder = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
             const sortedValues = values.slice().sort((a, b) => valueOrder.indexOf(a) - valueOrder.indexOf(b));
+
+            // Handle Ace-low straight (A,2,3,4,5)
+            const aceLow = ['2', '3', '4', '5', 'A'];
+            if (sortedValues.toString() === aceLow.toString()) {
+                return true;
+            }
+
             for (let i = 0; i < sortedValues.length - 1; i++) {
                 if (valueOrder.indexOf(sortedValues[i + 1]) - valueOrder.indexOf(sortedValues[i]) !== 1) {
                     return false;
@@ -991,6 +995,7 @@
         betAmountInput.value = betAmount;
         numAdditionalGames = 0;
         updateBetAmountText();
+        updatePaytable();
         miniGameCountDisplay.textContent = numAdditionalGames;
         setCookie('bankroll', bankroll, 1);
         dealButton.disabled = false;
